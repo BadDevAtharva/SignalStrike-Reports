@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SignalStrike — Myntra — May 03, 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --navy:   #0f1e3c;
+  --bg:     #f8f8fa;
+  --card:   #ffffff;
+  --border: #e2e2e6;
+  --text:   #1a1a1a;
+  --muted:  #666;
+  --green:  #1a7a3e;
+  --red:    #b41e1e;
+  --amber:  #b46a00;
+  --blue:   #0a5090;
+  --blue-bg:#eaf4ff;
+  --pos:    #27ae60;
+  --neg:    #c0392b;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:     #111318;
+    --card:   #1c2030;
+    --border: #2e3248;
+    --text:   #e8e8f0;
+    --muted:  #8888a0;
+    --blue-bg:#0e1e38;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; }
+a { color: var(--blue); }
+
+.header {
+  background: var(--navy);
+  color: #fff;
+  padding: 0;
+}
+.header-top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 32px 14px;
+}
+.header-top h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+.header-top .sub { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 3px; }
+.header-strip {
+  background: rgba(255,255,255,0.07);
+  padding: 8px 32px;
+  display: flex; gap: 24px; align-items: center; font-size: 12px; color: rgba(255,255,255,0.7);
+}
+.header-strip strong { color: #fff; }
+
+.pdf-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+  color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 12px;
+  text-decoration: none; cursor: pointer; transition: background .15s;
+}
+.pdf-btn:hover { background: rgba(255,255,255,0.2); }
+
+.wrap { max-width: 900px; margin: 0 auto; padding: 28px 20px 60px; }
+
+.decision {
+  background: var(--blue-bg);
+  border: 1.5px solid var(--blue);
+  border-radius: 10px;
+  padding: 16px 20px 18px;
+  margin-bottom: 24px;
+}
+.decision .label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+  color: var(--blue); text-transform: uppercase; margin-bottom: 6px;
+}
+.decision .text { font-size: 16px; font-weight: 600; color: var(--blue); line-height: 1.4; }
+
+.section-head {
+  display: flex; align-items: center; gap: 10px;
+  margin: 32px 0 14px;
+}
+.section-head::before {
+  content: ""; display: block;
+  width: 4px; height: 20px; background: var(--navy); border-radius: 2px;
+  flex-shrink: 0;
+}
+@media (prefers-color-scheme: dark) {
+  .section-head::before { background: #6080cc; }
+}
+.section-head h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.05em;
+                    text-transform: uppercase; color: var(--text); }
+
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 18px 20px; margin-bottom: 14px;
+}
+.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 600px) { .card-grid { grid-template-columns: 1fr; } }
+
+.score-strip {
+  display: grid; grid-template-columns: auto repeat(5, 1fr);
+  gap: 0; background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden; margin-bottom: 14px;
+}
+.posture-cell {
+  display: flex; align-items: center; justify-content: center;
+  padding: 14px 18px; font-size: 15px; font-weight: 700; color: #fff;
+  background: #b46a00;
+}
+.dim-cell {
+  padding: 10px 8px; text-align: center;
+  border-left: 1px solid var(--border);
+}
+.dim-cell .lbl { font-size: 9px; font-weight: 600; letter-spacing: 0.06em;
+                  text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.dim-cell .delta { font-size: 17px; font-weight: 700; }
+.dim-cell .compare { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.pos { color: var(--green); }
+.neg { color: var(--red); }
+
+.pill {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 4px; letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.pill-high { background: #fde8e8; color: var(--red); }
+.pill-med  { background: #fef3e2; color: var(--amber); }
+.pill-low  { background: #e8f5ee; color: var(--green); }
+@media (prefers-color-scheme: dark) {
+  .pill-high { background: #3a1010; color: #f09090; }
+  .pill-med  { background: #3a2800; color: #f0b060; }
+  .pill-low  { background: #0e2e1a; color: #60c080; }
+}
+
+.risk-row { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0;
+             border-bottom: 1px solid var(--border); }
+.risk-row:last-child { border-bottom: none; padding-bottom: 0; }
+.risk-body { flex: 1; }
+.risk-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+.risk-mitigation { font-size: 12px; color: var(--muted); }
+
+.persona-grid { display: grid; grid-template-columns: 130px 1fr; gap: 0; }
+.persona-row { display: contents; }
+.persona-label {
+  background: var(--blue-bg); color: var(--blue);
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 8px 10px; display: flex; align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+.persona-value {
+  padding: 8px 12px; font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+.persona-row:last-child .persona-label,
+.persona-row:last-child .persona-value { border-bottom: none; }
+
+.love-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+}
+.love-item:last-child { border-bottom: none; }
+.love-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pos);
+             flex-shrink: 0; margin-top: 5px; }
+.love-tag { font-size: 12px; font-weight: 600; }
+.love-mentions { font-size: 11px; color: var(--muted); margin-left: 4px; }
+.love-summary { font-size: 12px; color: var(--muted); }
+
+.graveyard-item {
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.graveyard-item:last-child { border-bottom: none; }
+.graveyard-header { display: flex; justify-content: space-between; align-items: center;
+                     margin-bottom: 4px; flex-wrap: wrap; gap: 6px; }
+.graveyard-title { font-size: 13px; font-weight: 600; }
+.graveyard-meta { font-size: 11px; color: var(--muted); }
+.effort-low  { color: var(--green); font-weight: 700; font-size: 11px; }
+.effort-med  { color: var(--amber); font-weight: 700; font-size: 11px; }
+.effort-high { color: var(--red);   font-weight: 700; font-size: 11px; }
+.graveyard-reason { font-size: 12px; color: var(--muted); }
+
+.velocity-row {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 9px 0; border-bottom: 1px solid var(--border);
+}
+.velocity-row:last-child { border-bottom: none; }
+.velocity-name { font-size: 13px; font-weight: 600; min-width: 120px; }
+.velocity-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 8px;
+  border-radius: 4px; white-space: nowrap; flex-shrink: 0;
+}
+.vel-accel  { background: #fde8e8; color: var(--red); }
+.vel-stable { background: #fef3e2; color: var(--amber); }
+.vel-slow   { background: #e8f5ee; color: var(--green); }
+@media (prefers-color-scheme: dark) {
+  .vel-accel  { background: #3a1010; color: #f09090; }
+  .vel-stable { background: #3a2800; color: #f0b060; }
+  .vel-slow   { background: #0e2e1a; color: #60c080; }
+}
+.velocity-signal { font-size: 12px; color: var(--muted); }
+
+.angle-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-left: 4px solid var(--navy); border-radius: 0 10px 10px 0;
+  padding: 14px 16px; margin-bottom: 12px; position: relative;
+}
+.angle-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; background: var(--navy); color: #fff;
+  border-radius: 50%; font-size: 11px; font-weight: 700;
+  margin-bottom: 8px;
+}
+.angle-headline { font-size: 16px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+@media (prefers-color-scheme: dark) { .angle-headline { color: #a0b8f0; } }
+.angle-meta { display: flex; flex-direction: column; gap: 4px; }
+.angle-row { display: flex; gap: 6px; align-items: flex-start; }
+.angle-label { font-size: 10px; font-weight: 700; color: var(--muted);
+                text-transform: uppercase; min-width: 62px; padding-top: 1px; }
+.angle-val { font-size: 12px; color: var(--text); flex: 1; }
+.copy-btn {
+  position: absolute; top: 12px; right: 14px;
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--muted); padding: 4px 10px; border-radius: 5px;
+  font-size: 11px; cursor: pointer; transition: all .15s;
+}
+.copy-btn:hover { background: var(--blue-bg); color: var(--blue); border-color: var(--blue); }
+.copy-btn.copied { background: #e8f5ee; color: var(--green); border-color: var(--green); }
+
+.chart-wrap { position: relative; height: 220px; margin: 10px 0 4px; }
+.chart-wrap-tall { position: relative; height: 260px; margin: 10px 0 4px; }
+
+.score-block { margin-bottom: 18px; }
+.score-block h4 { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.score-row { display: flex; gap: 8px; align-items: baseline; padding: 4px 0;
+              border-bottom: 1px solid var(--border); }
+.score-row:last-child { border-bottom: none; }
+.score-dim { font-size: 11px; font-weight: 600; min-width: 110px; }
+.score-val { font-size: 12px; font-weight: 700; min-width: 36px; }
+.score-reason { font-size: 11px; color: var(--muted); flex: 1; }
+
+.about { font-size: 11px; color: var(--muted); margin-top: 40px;
+          border-top: 1px solid var(--border); padding-top: 16px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>SignalStrike</h1>
+      <div class="sub">Weekly Intelligence Brief</div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <a class="pdf-btn" href="SignalStrike_Myntra_20260503.pdf" download>&#8595; Download PDF</a>
+    </div>
+  </div>
+  <div class="header-strip">
+    <span><strong>Myntra</strong></span>
+    <span>Fashion Marketplace</span>
+    <span>May 03, 2026</span>
+    <span style="margin-left:auto;font-size:12px;padding:2px 10px;border-radius:4px;
+                 background:#b46a00;color:#fff;font-weight:700">DEFENSE</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- Decision -->
+  <div class="decision" style="margin-top:24px">
+    <div class="label">This week's decision</div>
+    <div class="text">Launch high-intent acquisition campaigns targeting Nykaa Fashion and Ajio users, specifically highlighting guaranteed fast delivery and the absence of hidden convenience fees.</div>
+  </div>
+
+  <!-- Situation -->
+  <div class="section-head"><h2>SITUATION</h2></div>
+  <div class="card" style="font-size:14px;line-height:1.7">Posture is OFFENSE due to a substantial 3.3 happiness gap and extreme lead in speed (8 vs 2.5) and price (9 vs 4.0). The highest-signal failure is Nykaa Fashion's logistics collapse, with users reporting 10-20 day delivery delays. Myntra is positioned to capture market share by leveraging its delivery speed and price transparency.</div>
+
+  <!-- Score strip -->
+  <div class="section-head"><h2>POSTURE &amp; SCORE OVERVIEW</h2></div>
+  <div class="score-strip">
+  <div class="posture-cell" style="background:#b46a00">DEFENSE</div>
+  <div class="dim-cell">
+  <div class="lbl">Stability</div>
+  <div class="delta pos">+2.5</div>
+  <div class="compare">Us 7.0 / Them 4.5</div>
+</div><div class="dim-cell">
+  <div class="lbl">Speed</div>
+  <div class="delta pos">+5.5</div>
+  <div class="compare">Us 8.0 / Them 2.5</div>
+</div><div class="dim-cell">
+  <div class="lbl">Price</div>
+  <div class="delta pos">+5.0</div>
+  <div class="compare">Us 9.0 / Them 4.0</div>
+</div><div class="dim-cell">
+  <div class="lbl">Features</div>
+  <div class="delta pos">+2.0</div>
+  <div class="compare">Us 7.0 / Them 5.0</div>
+</div><div class="dim-cell">
+  <div class="lbl">Support</div>
+  <div class="delta pos">+1.5</div>
+  <div class="compare">Us 3.0 / Them 1.5</div>
+</div>
+</div>
+
+  <!-- Top risks -->
+  <div class="section-head"><h2>TOP RISKS THIS WEEK</h2></div>
+<div class="card"><div class="risk-row">
+  <span class="pill pill-high">high</span>
+  <div class="risk-body">
+    <div class="risk-title">Support inefficiency mirroring rival failures</div>
+    <div class="risk-mitigation">Mitigation: Urgent overhaul of support (current score 3) to ensure responses are not 'scripted,' a specific pain point for 14+ Nykaa users.</div>
+  </div>
+</div><div class="risk-row">
+  <span class="pill pill-med">medium</span>
+  <div class="risk-body">
+    <div class="risk-title">Logistics volatility (14 mentions)</div>
+    <div class="risk-mitigation">Mitigation: Audit failure points in delivery to protect the 'fast delivery' anchor which is our primary offensive weapon.</div>
+  </div>
+</div><div class="risk-row">
+  <span class="pill pill-med">medium</span>
+  <div class="risk-body">
+    <div class="risk-title">Competitor collection superiority (Ajio)</div>
+    <div class="risk-mitigation">Mitigation: Expand assortment of trendy jeans and high-quality materials to match the 'product_collection_quality' praise seen in Ajio reviews.</div>
+  </div>
+</div></div>
+
+  <!-- Opportunity + Persona -->
+  <div class="section-head"><h2>BIGGEST COMPETITOR OPPORTUNITY</h2></div>
+<div class="card">
+  <div style="font-size:15px;font-weight:700;margin-bottom:10px">
+    Nykaa Fashion &mdash; Severe logistics failure
+  </div>
+  <div style="margin-bottom:8px">
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:3px">WHO IT HURTS</div>
+    <div style="font-size:13px">Users experiencing 10-20 day shipping delays (15+ reviews), leading to total loss of trust in delivery timelines.</div>
+  </div>
+  <div>
+    <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:3px">WHY THEY WON'T FIX THIS</div>
+    <div style="font-size:13px">The scale of delays suggests a systemic supply chain or third-party logistics failure that cannot be solved via app updates.</div>
+  </div>
+</div>
+<div class="section-head"><h2>WHO TO TARGET IN YOUR NEXT AD</h2></div>
+<div class="card" style="padding:0;overflow:hidden">
+  <div class="persona-grid"><div class="persona-row">
+  <div class="persona-label">User type</div>
+  <div class="persona-value">The Impatient Trendsetter</div>
+</div><div class="persona-row">
+  <div class="persona-label">What triggers them</div>
+  <div class="persona-value">Ordering a time-sensitive outfit from Nykaa Fashion and facing a 15+ day delivery window.</div>
+</div><div class="persona-row">
+  <div class="persona-label">What they search</div>
+  <div class="persona-value">Fastest branded fashion delivery India</div>
+</div><div class="persona-row">
+  <div class="persona-label">Feature to show</div>
+  <div class="persona-value">Fast delivery speed (12 mentions of 'before time' delivery)</div>
+</div></div>
+</div>
+
+  <!-- What we do well -->
+  <div class="section-head"><h2>WHAT OUR USERS LOVE — RETENTION ANCHORS</h2></div>
+<div class="card">
+  <p style="font-size:12px;color:var(--muted);margin-bottom:10px">
+    These are the reasons users stay. Any product change risking these is high-stakes.
+    Use them as proof points in ads.
+  </p>
+  <div class="love-item">
+  <div class="love-dot"></div>
+  <div>
+    <span class="love-tag">Product Authenticity Quality</span>
+    <span class="love-mentions">(32 mentions)</span>
+    <div class="love-summary">Users consistently praise the 'genuine', 'original', and 'high quality' of brands and fabrics.</div>
+  </div>
+</div><div class="love-item">
+  <div class="love-dot"></div>
+  <div>
+    <span class="love-tag">Competitive Pricing</span>
+    <span class="love-mentions">(15 mentions)</span>
+    <div class="love-summary">High volume of praise for 'affordable prices', 'value for money', and being the most reasonable for branded items.</div>
+  </div>
+</div><div class="love-item">
+  <div class="love-dot"></div>
+  <div>
+    <span class="love-tag">Fast Delivery Speed</span>
+    <span class="love-mentions">(12 mentions)</span>
+    <div class="love-summary">Many users cite 'very fast delivery' and receiving orders 'before time'.</div>
+  </div>
+</div><div class="love-item">
+  <div class="love-dot"></div>
+  <div>
+    <span class="love-tag">User Interface Simplicity</span>
+    <span class="love-mentions">(8 mentions)</span>
+    <div class="love-summary">Users find the app 'easy to use', 'nicely designed', and 'user friendly'.</div>
+  </div>
+</div>
+</div>
+
+  <!-- Goliath Graveyard -->
+  <div class="section-head"><h2>GOLIATH GRAVEYARD — FEATURES COMPETITORS WON'T CLOSE</h2></div>
+<div class="card">
+  <p style="font-size:12px;color:var(--muted);margin-bottom:10px">
+    High complaint volume + competitor inaction = your safest roadmap bets.
+    Colour: green = ship this sprint &middot; amber = next quarter &middot; red = strategic only.
+  </p>
+  <div class="graveyard-item">
+  <div class="graveyard-header">
+    <span class="graveyard-title">Color Exchange Option</span>
+    <span class="graveyard-meta">Ajio &middot; 2w &middot; 1 mentions</span>
+    <span class="effort-low">LOW EFFORT</span>
+  </div>
+  <div class="graveyard-reason">Myntra's stability (7/10) is significantly higher than Ajio's (3/10), making the addition of an exchange flow low-risk.</div>
+</div><div class="graveyard-item">
+  <div class="graveyard-header">
+    <span class="graveyard-title">Post Shipment Cancellation</span>
+    <span class="graveyard-meta">Nykaa Fashion &middot; 2w &middot; 2 mentions</span>
+    <span class="effort-med">MEDIUM EFFORT</span>
+  </div>
+  <div class="graveyard-reason">Rivals have failed to implement basic post-purchase flexibility, creating a clear UX differentiator for Myntra.</div>
+</div>
+</div>
+
+  <!-- Churn velocity -->
+  <div class="section-head"><h2>COMPETITOR CHURN VELOCITY</h2></div>
+<div class="card" style="margin-bottom:6px">
+  <p style="font-size:11px;color:var(--muted);margin-bottom:10px">
+    ACCEL = users leaving faster than last week &mdash; act now.
+    STABLE = consistent bleed, window open.
+    SLOWING = competitor may be recovering.
+  </p>
+  <div class="velocity-row">
+  <span class="velocity-name">Ajio</span>
+  <span class="velocity-badge vel-accel">ACCEL ^</span>
+  <span class="velocity-signal">Critical performance failures including 7-day launch outages and scrolling UI bugs.</span>
+</div><div class="velocity-row">
+  <span class="velocity-name">Nykaa Fashion</span>
+  <span class="velocity-badge vel-accel">ACCEL ^</span>
+  <span class="velocity-signal">15+ reviews citing extreme shipping delays of 10-20 days.</span>
+</div>
+</div>
+
+  <!-- Ad angles -->
+  <div class="section-head"><h2>AD ANGLES FROM COMPETITOR FAILURES</h2></div>
+<p style="font-size:12px;color:var(--muted);margin:-6px 0 12px">
+  Use as A/B test hypotheses. Each angle maps to a confirmed pain point from this week's review data.
+</p>
+<div class="angle-card">
+  <button class="copy-btn" data-copy="&quot;Your outfit arrives before the event, not weeks later.&quot; — Target: Nykaa Fashion users. Exploits: 10-20 day delivery delays">Copy</button>
+  <div class="angle-num">1</div>
+  <div class="angle-headline">&ldquo;Your outfit arrives before the event, not weeks later.&rdquo;</div>
+  <div class="angle-meta">
+    <div class="angle-row">
+      <span class="angle-label">Audience</span>
+      <span class="angle-val">Nykaa Fashion users</span>
+    </div>
+    <div class="angle-row">
+      <span class="angle-label">Exploits</span>
+      <span class="angle-val">10-20 day delivery delays</span>
+    </div>
+  </div>
+</div><div class="angle-card">
+  <button class="copy-btn" data-copy="&quot;Genuine brands. Honest prices. Zero hidden fees.&quot; — Target: Ajio users. Exploits: Hidden 'convenience fees' of Rs 20-50">Copy</button>
+  <div class="angle-num">2</div>
+  <div class="angle-headline">&ldquo;Genuine brands. Honest prices. Zero hidden fees.&rdquo;</div>
+  <div class="angle-meta">
+    <div class="angle-row">
+      <span class="angle-label">Audience</span>
+      <span class="angle-val">Ajio users</span>
+    </div>
+    <div class="angle-row">
+      <span class="angle-label">Exploits</span>
+      <span class="angle-val">Hidden 'convenience fees' of Rs 20-50</span>
+    </div>
+  </div>
+</div><div class="angle-card">
+  <button class="copy-btn" data-copy="&quot;Love the variety, hate the wait? Switch to Myntra.&quot; — Target: General Fashion Shoppers. Exploits: Competitor users love collection quality but hate logistics speed; Myntra offers both authenticity and speed.">Copy</button>
+  <div class="angle-num">3</div>
+  <div class="angle-headline">&ldquo;Love the variety, hate the wait? Switch to Myntra.&rdquo;</div>
+  <div class="angle-meta">
+    <div class="angle-row">
+      <span class="angle-label">Audience</span>
+      <span class="angle-val">General Fashion Shoppers</span>
+    </div>
+    <div class="angle-row">
+      <span class="angle-label">Exploits</span>
+      <span class="angle-val">Competitor users love collection quality but hate logistics speed; Myntra offers both authenticity and speed.</span>
+    </div>
+  </div>
+</div>
+
+  <!-- Charts -->
+  <div class="section-head"><h2>REVIEW SENTIMENT BY APP</h2></div>
+  <div class="card">
+    <p style="font-size:12px;color:var(--muted);margin-bottom:10px">
+      Green = positive reviews (4-5 star). Red = negative reviews (1-3 star).<br>
+      Showing share of each app's reviews — a competitor with 90% red is in structural decline.
+    </p>
+    <div class="chart-wrap-tall"><canvas id="sentimentChart"></canvas></div>
+  </div>
+
+  <div class="section-head"><h2>WHERE RIVALS ARE BLEEDING — FRICTION BY TYPE</h2></div>
+  <div class="card">
+    <div class="chart-wrap"><canvas id="frictionChart"></canvas></div>
+  </div>
+
+  <!-- Score detail -->
+  <div class="section-head"><h2>APP SCORE BREAKDOWN</h2></div>
+<div class="card"><div class="score-block">
+  <h4 style="color:var(--green)">Myntra (Our App &middot; 249 reviews)</h4>
+  <div class="score-row">
+  <span class="score-dim" style="color:var(--green)">Stability (7/10)</span>
+  <span class="score-reason">Generally smooth for most, but one specific report of full-screen glitching.</span>
+</div><div class="score-row">
+  <span class="score-dim" style="color:var(--green)">Speed (8/10)</span>
+  <span class="score-reason">Strong praise for delivery speed from 12+ reviews, though a few complain about 2-3 week delays.</span>
+</div><div class="score-row">
+  <span class="score-dim" style="color:var(--green)">Price (9/10)</span>
+  <span class="score-reason">Overwhelmingly positive feedback on affordability; only minor complaints regarding 'platform fees'.</span>
+</div><div class="score-row">
+  <span class="score-dim" style="color:var(--green)">Features (7/10)</span>
+  <span class="score-reason">Wide variety and reward systems praised, but critical gaps in privacy/history controls.</span>
+</div><div class="score-row">
+  <span class="score-dim" style="color:var(--green)">Support (3/10)</span>
+  <span class="score-reason">Heavy criticism (9+ reviews) regarding customer care disconnecting calls and ineffective chat bots.</span>
+</div>
+</div><div class="score-block">
+  <h4 style="">Ajio (Competitor &middot; 159 reviews)</h4>
+  <div class="score-row">
+  <span class="score-dim" style="">Stability (3/10)</span>
+  <span class="score-reason">Multiple reviews mention the app crashing, failing to launch for 7 days, and a critical scrolling bug where the UI jumps to the top.</span>
+</div><div class="score-row">
+  <span class="score-dim" style="">Speed (3/10)</span>
+  <span class="score-reason">Users explicitly call it a 'super slow app' with 'too much buffering' and slow loading of items.</span>
+</div><div class="score-row">
+  <span class="score-dim" style="">Price (4/10)</span>
+  <span class="score-reason">While some praise the prices, many users are outraged by hidden 'convenience fees' (Rs 20-50) deducted during returns.</span>
+</div><div class="score-row">
+  <span class="score-dim" style="">Features (5/10)</span>
+  <span class="score-reason">Strong collection and general app flow are appreciated, but basic post-purchase features like color exchange and account deletion are missing.</span>
+</div><div class="score-row">
+  <span class="score-dim" style="">Support (2/10)</span>
+  <span class="score-reason">Overwhelming consensus on 'worst customer service' with reports of unresolved refund issues lasting over two months.</span>
+</div>
+</div><div class="score-block">
+  <h4 style="">Nykaa Fashion (Competitor &middot; 52 reviews)</h4>
+  <div class="score-row">
+  <span class="score-dim" style="">Stability (6/10)</span>
+  <span class="score-reason">Generally stable, but one report of the app not opening suggests occasional launch failures.</span>
+</div><div class="score-row">
+  <span class="score-dim" style="">Speed (2/10)</span>
+  <span class="score-reason">Severe logistics speed issues; 15+ reviews cite shipping delays of 10-20 days.</span>
+</div><div class="score-row">
+  <span class="score-dim" style="">Price (4/10)</span>
+  <span class="score-reason">Multiple reviews complain about high prices relative to quality and price discrepancies during COD.</span>
+</div><div class="score-row">
+  <span class="score-dim" style="">Features (5/10)</span>
+  <span class="score-reason">Lack of payment flexibility (COD/UPI for some brands) and missing post-shipment cancellation options.</span>
+</div><div class="score-row">
+  <span class="score-dim" style="">Support (1/10)</span>
+  <span class="score-reason">Overwhelming consensus (14+ reviews) that support is useless, uses scripted responses, and fails to solve problems.</span>
+</div>
+</div></div>
+
+  <div class="about">
+    Scores reflect user-perceived quality from public app store reviews (7-day window ending May 03, 2026).
+    Positive and negative reviews are both analysed. Scores are directional signals, not objective benchmarks.
+    &nbsp;&middot;&nbsp; Generated 2026-05-03 13:01 UTC
+  </div>
+
+</div>
+
+<script>
+const sentimentData = {"labels": ["Myntra", "Ajio", "Nykaa Fashion"], "pos": [83.5, 6.9, 1.9], "neg": [16.5, 93.1, 98.1], "pos_raw": [208, 11, 1], "neg_raw": [41, 148, 51]};
+const frictionData  = {"labels": ["Setup", "Utility", "Performance", "Monetization"], "values": [0, 80, 11, 26]};
+const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+const textColor  = dark ? "#8888a0" : "#666";
+const gridColor  = dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+
+// Sentiment diverging bar
+(function() {
+  const ctx = document.getElementById("sentimentChart").getContext("2d");
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: sentimentData.labels,
+      datasets: [
+        {
+          label: "Negative (1-3★)",
+          data: sentimentData.neg.map(v => -v),
+          backgroundColor: "#c0392b",
+          borderRadius: 3,
+        },
+        {
+          label: "Positive (4-5★)",
+          data: sentimentData.pos,
+          backgroundColor: "#27ae60",
+          borderRadius: 3,
+        }
+      ]
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          stacked: false,
+          ticks: {
+            color: textColor,
+            callback: v => Math.abs(v) + "%"
+          },
+          grid: { color: gridColor },
+          min: -105, max: 105,
+        },
+        y: { ticks: { color: textColor }, grid: { display: false } }
+      },
+      plugins: {
+        legend: { position: "bottom", labels: { color: textColor, boxWidth: 12, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const v = Math.abs(ctx.raw);
+              const idx = ctx.dataIndex;
+              const raw = ctx.datasetIndex === 0
+                ? sentimentData.neg_raw[idx]
+                : sentimentData.pos_raw[idx];
+              return ` ${Math.abs(v).toFixed(1)}%  (${raw} reviews)`;
+            }
+          }
+        }
+      }
+    }
+  });
+})();
+
+// Friction horizontal bar
+(function() {
+  const ctx = document.getElementById("frictionChart").getContext("2d");
+  const maxV = Math.max(...frictionData.values);
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: frictionData.labels,
+      datasets: [{
+        data: frictionData.values,
+        backgroundColor: frictionData.values.map(v => v === maxV ? "#c0392b" : "#e8a090"),
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.raw} mentions` } }
+      },
+      scales: {
+        x: { ticks: { color: textColor }, grid: { color: gridColor } },
+        y: { ticks: { color: textColor }, grid: { display: false } }
+      }
+    }
+  });
+})();
+
+// Copy buttons
+document.querySelectorAll(".copy-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const text = btn.dataset.copy;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = "Copied!";
+      btn.classList.add("copied");
+      setTimeout(() => {
+        btn.textContent = "Copy";
+        btn.classList.remove("copied");
+      }, 1800);
+    });
+  });
+});
+</script>
+</body>
+</html>

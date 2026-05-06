@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SignalStrike &mdash; MacroFactor</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ── Design Tokens ── */
+:root {
+  --teal:       #0d9488;
+  --teal-light: #14b8a6;
+  --teal-dim:   rgba(13,148,136,0.15);
+  --teal-glow:  rgba(13,148,136,0.08);
+  --teal-mid:   rgba(13,148,136,0.35);
+
+  --bg-page:    #eef0f4;
+  --bg-surface: #ffffff;
+  --bg-raised:  #f8fafc;
+  --bg-input:   #f1f5f9;
+
+  --border:     rgba(0,0,0,0.08);
+  --border-med: rgba(0,0,0,0.14);
+  --border-strong: rgba(0,0,0,0.22);
+
+  --text-hi:    #0f172a;
+  --text-body:  #334155;
+  --text-muted: #64748b;
+  --text-faint: #94a3b8;
+
+  --green:  #059669; --green-bg:  rgba(5,150,105,0.1);
+  --red:    #dc2626; --red-bg:    rgba(220,38,38,0.1);
+  --amber:  #d97706; --amber-bg:  rgba(217,119,6,0.1);
+
+  --nav-w:   230px;
+  --topbar-h: 56px;
+  --radius:   12px;
+  --radius-sm: 7px;
+  --shadow:   0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+[data-theme="dark"] {
+  --bg-page:    #090c12;
+  --bg-surface: #111827;
+  --bg-raised:  #1a2235;
+  --bg-input:   #1e293b;
+
+  --border:     rgba(255,255,255,0.07);
+  --border-med: rgba(255,255,255,0.12);
+  --border-strong: rgba(255,255,255,0.2);
+
+  --text-hi:    #f1f5f9;
+  --text-body:  #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-faint: #475569;
+
+  --green:  #10b981; --green-bg:  rgba(16,185,129,0.12);
+  --red:    #f87171; --red-bg:    rgba(248,113,113,0.12);
+  --amber:  #fbbf24; --amber-bg:  rgba(251,191,36,0.12);
+
+  --shadow:   0 1px 3px rgba(0,0,0,0.5);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.5);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  background: var(--bg-page);
+  color: var(--text-body);
+  font-size: 14px;
+  line-height: 1.65;
+  min-height: 100vh;
+}
+
+/* ── Top bar ── */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  height: var(--topbar-h);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 20px;
+  gap: 14px;
+  box-shadow: var(--shadow);
+}
+.topbar-brand {
+  display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0;
+}
+.topbar-logo {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--teal) 0%, #0f766e 100%);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 900; color: #fff; letter-spacing: -0.5px;
+  box-shadow: 0 2px 8px rgba(13,148,136,0.35);
+}
+.topbar-name {
+  font-size: 16px; font-weight: 800; color: var(--text-hi);
+  letter-spacing: -0.5px;
+}
+.topbar-divider {
+  width: 1px; height: 24px; background: var(--border-med); flex-shrink: 0;
+}
+.topbar-meta {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.topbar-chip {
+  font-size: 11px; color: var(--text-muted);
+  background: var(--bg-raised);
+  border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px;
+  white-space: nowrap;
+}
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.action-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--teal); color: #fff;
+  padding: 7px 16px; border-radius: 8px; font-size: 12px; font-weight: 700;
+  text-decoration: none; border: none; cursor: pointer;
+  transition: opacity .15s, transform .1s;
+  box-shadow: 0 2px 8px rgba(13,148,136,0.3);
+}
+.action-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+.theme-toggle {
+  width: 36px; height: 36px; border-radius: 9px;
+  background: var(--bg-raised); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 16px; transition: background .15s;
+}
+.theme-toggle:hover { background: var(--bg-input); }
+.hamburger {
+  display: none;
+  width: 36px; height: 36px; border-radius: 9px;
+  background: var(--bg-raised); border: 1px solid var(--border);
+  align-items: center; justify-content: center;
+  cursor: pointer; font-size: 18px; color: var(--text-muted);
+}
+
+/* ── Layout ── */
+.layout {
+  display: flex;
+  padding-top: var(--topbar-h);
+  min-height: 100vh;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: var(--nav-w);
+  flex-shrink: 0;
+  position: fixed;
+  top: var(--topbar-h); bottom: 0; left: 0;
+  overflow-y: auto;
+  padding: 20px 12px 40px;
+  border-right: 1px solid var(--border);
+  background: var(--bg-surface);
+  display: flex; flex-direction: column; gap: 2px;
+  z-index: 100;
+  transition: transform .25s cubic-bezier(.4,0,.2,1);
+}
+.sidebar-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-faint);
+  padding: 6px 10px 8px; margin-bottom: 2px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 8px;
+  text-decoration: none; color: var(--text-muted); font-size: 12.5px;
+  transition: background .12s, color .12s;
+  cursor: pointer;
+}
+.nav-item:hover { background: var(--bg-raised); color: var(--text-hi); }
+.nav-item.active {
+  background: var(--teal-glow);
+  color: var(--teal);
+  font-weight: 600;
+}
+.nav-num {
+  width: 20px; height: 20px; border-radius: 6px;
+  background: var(--bg-input); border: 1px solid var(--border);
+  font-size: 10px; font-weight: 700; color: var(--text-faint);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all .12s;
+}
+.nav-item.active .nav-num {
+  background: var(--teal); border-color: var(--teal);
+  color: #fff;
+}
+.nav-label { flex: 1; }
+
+/* ── Overlay for mobile nav ── */
+.nav-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 99;
+  background: rgba(0,0,0,0.45);
+}
+.nav-overlay.active { display: block; }
+
+/* ── Main content ── */
+.main {
+  margin-left: var(--nav-w);
+  flex: 1;
+  padding: 36px 36px 100px;
+  max-width: calc(860px + var(--nav-w));
+  width: 100%;
+}
+
+/* ── Panel (each section) — the KEY fix ── */
+.panel {
+  margin-bottom: 0;
+  padding-top: 52px;   /* breathing room above each section */
+  scroll-margin-top: calc(var(--topbar-h) + 16px);
+}
+
+/* Section separator — visible horizontal rule between sections */
+.panel + .panel {
+  border-top: 2px solid var(--border-med);
+}
+
+/* Section header */
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-num {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--teal);
+  background: var(--teal-dim);
+  border: 1.5px solid var(--teal-mid);
+  border-radius: 8px;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: -0.3px;
+}
+
+.panel-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-hi);
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  /* Left accent bar */
+  padding-left: 14px;
+  border-left: 4px solid var(--teal);
+}
+
+.panel-body {
+  /* Content sits below the header with clear separation */
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.card-body { padding: 20px 22px; }
+.card + .card { margin-top: 10px; }
+.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ── Decision hero ── */
+.decision-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-med);
+  border-left: 5px solid var(--teal);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  box-shadow: var(--shadow-md);
+}
+.decision-eyebrow {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--teal); margin-bottom: 10px;
+}
+.decision-text {
+  font-size: 18px; font-weight: 700; color: var(--text-hi); line-height: 1.5;
+}
+
+/* ── Metric strip ── */
+.metric-strip {
+  display: grid;
+  grid-template-columns: auto repeat(5, 1fr);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.posture-block {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 18px 22px; min-width: 96px;
+  background: rgba(217,119,6,0.12);
+}
+.posture-word {
+  font-size: 11px; font-weight: 900; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #d97706;
+}
+.posture-gap {
+  font-size: 28px; font-weight: 800; color: #d97706;
+  line-height: 1; margin: 2px 0;
+}
+.posture-sublabel { font-size: 9px; color: var(--text-muted); }
+.dim-col {
+  border-left: 1px solid var(--border);
+  padding: 14px 6px; text-align: center;
+}
+.dim-name { font-size: 9px; font-weight: 700; text-transform: uppercase;
+             letter-spacing: 0.06em; color: var(--text-faint); margin-bottom: 6px; }
+.dim-delta { font-size: 20px; font-weight: 800; line-height: 1; }
+.dim-compare { font-size: 10px; color: var(--text-faint); margin-top: 4px; }
+.c-pos { color: var(--green); }
+.c-neg { color: var(--red); }
+.c-neu { color: var(--text-muted); }
+
+/* ── Situation ── */
+.verdict-text {
+  font-size: 14px; color: var(--text-body); line-height: 1.8;
+}
+
+/* ── Info blocks ── */
+.info-block { margin-bottom: 16px; }
+.info-label {
+  font-size: 10px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-faint); margin-bottom: 6px;
+}
+.info-value { font-size: 14px; color: var(--text-hi); line-height: 1.65; }
+.opp-title {
+  font-size: 17px; font-weight: 700; color: var(--text-hi);
+  margin-bottom: 6px; line-height: 1.4;
+}
+.opp-competitor {
+  display: inline-block; font-size: 11px; font-weight: 700;
+  background: var(--red-bg); color: var(--red);
+  padding: 3px 10px; border-radius: 20px; margin-bottom: 16px;
+}
+
+/* ── Persona grid ── */
+.persona-table { width: 100%; border-collapse: collapse; }
+.persona-table tr { border-bottom: 1px solid var(--border); }
+.persona-table tr:last-child { border-bottom: none; }
+.persona-table td { padding: 12px 16px; vertical-align: top; }
+.persona-table .pk {
+  font-size: 10px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--teal); white-space: nowrap;
+  width: 150px; padding-right: 16px;
+}
+.persona-table .pv { font-size: 13.5px; color: var(--text-hi); line-height: 1.6; }
+
+/* ── Love items ── */
+.love-row {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.love-row:last-child { border-bottom: none; }
+.love-icon {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: var(--teal-dim);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 16px;
+}
+.love-tag { font-size: 13.5px; font-weight: 700; color: var(--text-hi); }
+.love-count { font-size: 11px; color: var(--teal); font-weight: 700; margin-left: 8px; }
+.love-sum { font-size: 12px; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
+
+/* ── Graveyard ── */
+.grav-row {
+  padding: 14px 0; border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.grav-row:last-child { border-bottom: none; }
+.grav-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.grav-title { font-size: 14.5px; font-weight: 700; color: var(--text-hi); }
+.grav-meta { font-size: 11.5px; color: var(--text-muted); }
+.effort {
+  font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 5px;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.effort-low  { background: var(--green-bg); color: var(--green); }
+.effort-med  { background: var(--amber-bg); color: var(--amber); }
+.effort-high { background: var(--red-bg);   color: var(--red); }
+.grav-reason { font-size: 12.5px; color: var(--text-muted); line-height: 1.65; }
+
+/* ── Risk register ── */
+.risk-row {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 14px 0; border-bottom: 1px solid var(--border);
+}
+.risk-row:last-child { border-bottom: none; }
+.severity {
+  font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 6px;
+  text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap;
+  flex-shrink: 0; margin-top: 1px;
+}
+.sev-high { background: var(--red-bg);   color: var(--red); }
+.sev-med  { background: var(--amber-bg); color: var(--amber); }
+.sev-low  { background: var(--green-bg); color: var(--green); }
+.risk-title { font-size: 13.5px; font-weight: 600; color: var(--text-hi); margin-bottom: 4px; }
+.risk-mit { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+/* ── Velocity ── */
+.vel-row {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.vel-row:last-child { border-bottom: none; }
+.vel-name { font-size: 13.5px; font-weight: 700; color: var(--text-hi); min-width: 140px; }
+.vel-badge {
+  font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 6px;
+  text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0;
+}
+.vel-accel  { background: var(--red-bg);   color: var(--red); }
+.vel-stable { background: var(--amber-bg); color: var(--amber); }
+.vel-slow   { background: var(--green-bg); color: var(--green); }
+.vel-signal { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; flex: 1; }
+
+/* ── Ad angle cards ── */
+.angles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+.angle-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--teal);
+  border-radius: var(--radius);
+  padding: 20px;
+  position: relative;
+  box-shadow: var(--shadow);
+  transition: box-shadow .15s, transform .15s;
+}
+.angle-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.angle-num {
+  width: 24px; height: 24px; border-radius: 7px;
+  background: var(--teal); color: #fff;
+  font-size: 12px; font-weight: 800;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-bottom: 12px;
+}
+.angle-headline {
+  font-size: 16px; font-weight: 700; color: var(--text-hi);
+  margin-bottom: 14px; line-height: 1.4;
+}
+.angle-rows { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.angle-row { display: flex; gap: 8px; }
+.angle-key {
+  font-size: 10px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--text-faint);
+  min-width: 66px; padding-top: 1px; flex-shrink: 0;
+}
+.angle-val { font-size: 12.5px; color: var(--text-muted); flex: 1; line-height: 1.55; }
+.copy-btn {
+  position: absolute; top: 16px; right: 16px;
+  background: var(--bg-raised); border: 1px solid var(--border);
+  color: var(--text-muted); padding: 5px 12px;
+  border-radius: 7px; font-size: 11px; font-weight: 600;
+  cursor: pointer; transition: all .15s;
+}
+.copy-btn:hover { background: var(--teal-dim); color: var(--teal); border-color: var(--teal); }
+.copy-btn.copied { background: var(--green-bg); color: var(--green); border-color: var(--green); }
+
+/* ── Charts ── */
+.chart-outer {
+  background: var(--bg-surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 22px 24px;
+}
+.chart-title {
+  font-size: 14px; font-weight: 700; color: var(--text-hi); margin-bottom: 4px;
+}
+.chart-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.6; }
+.chart-wrap    { position: relative; height: 200px; }
+.chart-wrap-lg { position: relative; height: 250px; }
+
+/* ── App strengths (What Users Love Per App) ── */
+.strengths-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.strength-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.strength-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px 10px;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border);
+}
+.strength-app-name { font-size: 13px; font-weight: 800; }
+.strength-tag {
+  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+}
+.strength-ours { background: var(--teal-dim); color: var(--teal); }
+.strength-comp { background: var(--bg-input); color: var(--text-muted); }
+.strength-caution {
+  font-size: 11px; color: var(--amber); background: var(--amber-bg);
+  padding: 7px 14px; border-bottom: 1px solid var(--border);
+  font-style: italic; line-height: 1.5;
+}
+.strength-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+}
+.strength-item:last-child { border-bottom: none; }
+.strength-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--teal); flex-shrink: 0; margin-top: 5px;
+}
+.strength-comp-dot {
+  background: var(--amber);
+}
+.strength-text { font-size: 12.5px; color: var(--text-body); line-height: 1.55; flex: 1; }
+.strength-count { font-size: 11px; font-weight: 700; color: var(--teal); white-space: nowrap; margin-left: 4px; }
+.strength-comp-count { color: var(--amber); }
+
+/* ── Friction chart with legend ── */
+.friction-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.friction-legend-item {
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.friction-legend-dot {
+  width: 10px; height: 10px; border-radius: 3px;
+  flex-shrink: 0; margin-top: 3px;
+}
+.friction-legend-label { font-size: 11.5px; font-weight: 700; color: var(--text-hi); margin-bottom: 2px; }
+.friction-legend-desc  { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+
+/* ── Score breakdown ── */
+.app-block { margin-bottom: 12px; }
+.app-header {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 14px 22px 12px; border-bottom: 1px solid var(--border);
+  background: var(--bg-raised);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.app-name { font-size: 15px; font-weight: 800; }
+.app-tag {
+  font-size: 10px; font-weight: 700; padding: 3px 9px;
+  border-radius: 20px; margin-left: auto;
+}
+.tag-ours { background: var(--teal-dim); color: var(--teal); }
+.tag-comp { background: var(--bg-input); color: var(--text-muted); }
+.conf-badge { font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+.conf-high { background: var(--green-bg); color: var(--green); }
+.conf-med  { background: var(--amber-bg); color: var(--amber); }
+.conf-low  { background: var(--red-bg);   color: var(--red); }
+.score-table { width: 100%; border-collapse: collapse; }
+.score-table tr { border-bottom: 1px solid var(--border); }
+.score-table tr:last-child { border-bottom: none; }
+.score-table td { padding: 10px 22px; vertical-align: top; }
+.score-dim { font-size: 12.5px; font-weight: 700; width: 165px; white-space: nowrap; }
+.score-val { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+.wow { font-size: 11px; font-weight: 700; margin-left: 6px; }
+.wow-up { color: var(--green); } .wow-dn { color: var(--red); }
+
+/* ── Footer ── */
+.report-footer {
+  margin-top: 60px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--text-faint); text-align: center;
+}
+
+/* ── Scrollbar ── */
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border-med); border-radius: 4px; }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .topbar-divider { display: none; }
+  .topbar-meta { display: none; }
+}
+
+@media (max-width: 700px) {
+  :root { --nav-w: 260px; }
+
+  .hamburger { display: flex; }
+
+  .sidebar {
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-lg);
+    z-index: 150;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main {
+    margin-left: 0;
+    padding: 20px 16px 80px;
+  }
+
+  .metric-strip {
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto;
+  }
+  .posture-block {
+    grid-column: 1 / -1;
+    flex-direction: row; gap: 12px; justify-content: center;
+    padding: 14px;
+  }
+
+  .card-grid { grid-template-columns: 1fr; }
+
+  .angles-grid { grid-template-columns: 1fr; }
+
+  .panel-title { font-size: 18px; }
+
+  .vel-name { min-width: 100px; }
+
+  .persona-table .pk { width: 110px; }
+}
+
+@media (max-width: 480px) {
+  .topbar-name { font-size: 14px; }
+  .metric-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+  .panel-title { font-size: 16px; padding-left: 10px; }
+  .panel-num { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Overlay for mobile nav -->
+<div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
+
+<header class="topbar">
+  <button class="hamburger" onclick="openNav()" title="Open navigation">&#9776;</button>
+  <div class="topbar-brand">
+    <div class="topbar-logo">SS</div>
+    <span class="topbar-name">SignalStrike</span>
+  </div>
+  <div class="topbar-divider"></div>
+  <div class="topbar-meta">
+    <span class="topbar-chip">MacroFactor</span>
+    <span class="topbar-chip">Nutrition &amp; Diet</span>
+    <span class="topbar-chip">May 06, 2026</span>
+  </div>
+  <div class="topbar-right">
+    <a class="action-btn" href="SignalStrike_MacroFactor_20260506.pdf" download>&#8595; PDF</a>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" id="theme-btn">🌙</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-label">Report Sections</div>
+    <a class="nav-item" href="#decision" onclick="navClick(this)"><span class="nav-num">1</span><span class="nav-label">This Week's Decision</span></a><a class="nav-item" href="#situation" onclick="navClick(this)"><span class="nav-num">2</span><span class="nav-label">Situation</span></a><a class="nav-item" href="#opportunity" onclick="navClick(this)"><span class="nav-num">3</span><span class="nav-label">Primary Opportunity</span></a><a class="nav-item" href="#persona" onclick="navClick(this)"><span class="nav-num">4</span><span class="nav-label">Switcher Persona</span></a><a class="nav-item" href="#anchors" onclick="navClick(this)"><span class="nav-num">5</span><span class="nav-label">What Our Users Love</span></a><a class="nav-item" href="#graveyard" onclick="navClick(this)"><span class="nav-num">6</span><span class="nav-label">Goliath Graveyard</span></a><a class="nav-item" href="#risks" onclick="navClick(this)"><span class="nav-num">7</span><span class="nav-label">Risk Register</span></a><a class="nav-item" href="#velocity" onclick="navClick(this)"><span class="nav-num">8</span><span class="nav-label">Churn Velocity</span></a><a class="nav-item" href="#angles" onclick="navClick(this)"><span class="nav-num">9</span><span class="nav-label">Ad Angles</span></a><a class="nav-item" href="#sentiment" onclick="navClick(this)"><span class="nav-num">10</span><span class="nav-label">Review Sentiment</span></a><a class="nav-item" href="#friction" onclick="navClick(this)"><span class="nav-num">11</span><span class="nav-label">Competitor Friction</span></a><a class="nav-item" href="#strengths" onclick="navClick(this)"><span class="nav-num">12</span><span class="nav-label">What Users Love Per App</span></a><a class="nav-item" href="#scores" onclick="navClick(this)"><span class="nav-num">13</span><span class="nav-label">Score Breakdown</span></a>
+  </nav>
+
+  <main class="main">
+    <section class="panel" id="decision"><div class="panel-head"><span class="panel-num">01</span><h2 class="panel-title">This Week's Decision</h2></div><div class="panel-body"><div class="decision-card">
+  <div class="decision-eyebrow">&#9654; Action required this week</div>
+  <div class="decision-text">Freeze aggressive acquisition spend and redirect engineering resources to resolve the speed regression and support bottlenecks to stabilize the floor, BUT fix support (currently 3/10) first or churn from new users will cancel acquisition gains.</div>
+</div></div></section><section class="panel" id="situation"><div class="panel-head"><span class="panel-num">02</span><h2 class="panel-title">Situation</h2></div><div class="panel-body"><div class="metric-strip">
+  <div class="posture-block">
+    <div class="posture-word">DEFENSE</div>
+    <div class="posture-gap">+0.47</div>
+    <div class="posture-sublabel">gap score</div>
+  </div>
+  <div class="dim-col">
+  <div class="dim-name">Stability</div>
+  <div class="dim-delta c-pos">+3.0</div>
+  <div class="dim-compare">9.0 vs 6.0</div>
+</div><div class="dim-col">
+  <div class="dim-name">Speed</div>
+  <div class="dim-delta c-neg">-0.3</div>
+  <div class="dim-compare">6.0 vs 6.3</div>
+</div><div class="dim-col">
+  <div class="dim-name">Price</div>
+  <div class="dim-delta c-pos">+0.3</div>
+  <div class="dim-compare">4.0 vs 3.7</div>
+</div><div class="dim-col">
+  <div class="dim-name">Features</div>
+  <div class="dim-delta c-pos">+0.7</div>
+  <div class="dim-compare">8.0 vs 7.3</div>
+</div><div class="dim-col">
+  <div class="dim-name">Support</div>
+  <div class="dim-delta c-neg">-1.3</div>
+  <div class="dim-compare">3.0 vs 4.3</div>
+</div>
+</div>
+<div class="card">
+  <div class="card-body">
+    <div class="verdict-text">Posture is DEFENSE (Gap +0.47). While MyFitnessPal is experiencing a stability collapse (2/10) and massive UI rejection (118 mentions), MacroFactor's own speed and support scores plummeted by 2.0 points each this week. This internal friction neutralizes the current acquisition window, as internal leakage risk now mirrors external opportunity.</div>
+  </div>
+</div></div></section><section class="panel" id="opportunity"><div class="panel-head"><span class="panel-num">03</span><h2 class="panel-title">Primary Opportunity</h2></div><div class="panel-body"><div class="card">
+  <div class="card-body">
+    <div class="opp-competitor">MyFitnessPal</div>
+    <div class="opp-title">Increased click depth and UI utility regression</div>
+    <div class="info-block">
+      <div class="info-label">Who it hurts</div>
+      <div class="info-value">Users report the app feels 'clunky' and have lost essential utilities like the weekly start day setting, turning a fast habit into a chore.</div>
+    </div>
+    <div class="info-block" style="margin-bottom:0">
+      <div class="info-label">Why they won't fix it</div>
+      <div class="info-value">The UI shift is likely tied to a new monetization architecture designed to force users into specific high-friction funnels for subscription conversion.</div>
+    </div>
+  </div>
+</div></div></section><section class="panel" id="persona"><div class="panel-head"><span class="panel-num">04</span><h2 class="panel-title">Switcher Persona</h2></div><div class="panel-body"><div class="card">
+  <div class="card-body" style="padding:0">
+    <table class="persona-table"><tr>
+  <td class="pk">User type</td>
+  <td class="pv">The Efficiency Optimizer</td>
+</tr><tr>
+  <td class="pk">Trigger</td>
+  <td class="pv">The 'click-tax'—realizing a simple food log now takes 3x as many taps as it did previously.</td>
+</tr><tr>
+  <td class="pk">Search intent</td>
+  <td class="pv">Fastest calorie tracker no ads</td>
+</tr><tr>
+  <td class="pk">Feature to show</td>
+  <td class="pv">Quick Add barcode scanning and streamlined TDEE generation.</td>
+</tr></table>
+  </div>
+</div></div></section><section class="panel" id="anchors"><div class="panel-head"><span class="panel-num">05</span><h2 class="panel-title">What Our Users Love</h2></div><div class="panel-body"><div class="card">
+  <div class="card-body" style="padding-bottom:4px">
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">
+      Retention anchors. Do not break these. Use as proof points in ads.
+    </p>
+    <div class="love-row">
+  <div class="love-icon">⭐</div>
+  <div>
+    <div><span class="love-tag">Accurate Macro Tracking</span><span class="love-count">1 mentions</span></div>
+    <div class="love-sum">Users praise the ability to use weight and calories to generate an accurate TDEE.</div>
+  </div>
+</div><div class="love-row">
+  <div class="love-icon">🚀</div>
+  <div>
+    <div><span class="love-tag">Recipe Photo Logging</span><span class="love-count">1 mentions</span></div>
+    <div class="love-sum">The addition of photo uploads for AI food scanning is highly valued.</div>
+  </div>
+</div><div class="love-row">
+  <div class="love-icon">💰</div>
+  <div>
+    <div><span class="love-tag">Net Exercise Calorie Calculation</span><span class="love-count">1 mentions</span></div>
+    <div class="love-sum">Users appreciate the consistency gained by ignoring extra workout calories.</div>
+  </div>
+</div><div class="love-row">
+  <div class="love-icon">🔄</div>
+  <div>
+    <div><span class="love-tag">Quick Add</span><span class="love-count">1 mentions</span></div>
+    <div class="love-sum">Barcode scanning is cited as a game-changer that removes the burden of tracking.</div>
+  </div>
+</div>
+  </div>
+</div></div></section><section class="panel" id="graveyard"><div class="panel-head"><span class="panel-num">06</span><h2 class="panel-title">Goliath Graveyard</h2></div><div class="panel-body"><div class="card">
+  <div class="card-body">
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">
+      High mention volume + competitor inaction = safe roadmap bets. &nbsp;
+      <strong style="color:var(--green)">Green</strong> = ship now &nbsp;
+      <strong style="color:var(--amber)">Amber</strong> = next quarter &nbsp;
+      <strong style="color:var(--red)">Red</strong> = strategic only
+    </p>
+    <div class="grav-row">
+  <div class="grav-header">
+    <span class="grav-title">Week Start Customization</span>
+    <span class="grav-meta">MyFitnessPal &middot; 2w &middot; 15 mentions</span>
+    <span class="effort effort-low">LOW</span>
+  </div>
+  <div class="grav-reason">It is a basic utility feature that MFP explicitly removed, creating a specific point of resentment for power users.</div>
+</div>
+  </div>
+</div></div></section><section class="panel" id="risks"><div class="panel-head"><span class="panel-num">07</span><h2 class="panel-title">Risk Register</h2></div><div class="panel-body"><div class="card"><div class="card-body"><div class="risk-row">
+  <span class="severity sev-high">high</span>
+  <div>
+    <div class="risk-title">Support and Speed Decay</div>
+    <div class="risk-mit">Mitigation: Immediate audit of the last two sprint deployments to identify the cause of the 2.0 point drop in speed and support responsiveness.</div>
+  </div>
+</div><div class="risk-row">
+  <span class="severity sev-med">medium</span>
+  <div>
+    <div class="risk-title">International Database Gap</div>
+    <div class="risk-mit">Mitigation: Directly target MFP's 'international food database' strength by prioritizing regional data ingestion for underserved markets.</div>
+  </div>
+</div></div></div></div></section><section class="panel" id="velocity"><div class="panel-head"><span class="panel-num">08</span><h2 class="panel-title">Churn Velocity</h2></div><div class="panel-body"><div class="card">
+  <div class="card-body">
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">
+      ACCEL = leaving faster than last week — act now. &nbsp;
+      STABLE = consistent bleed, window open. &nbsp;
+      SLOWING = may be recovering.
+    </p>
+    <div class="vel-row">
+  <span class="vel-name">MyFitnessPal</span>
+  <span class="vel-badge vel-accel">ACCEL ↑</span>
+  <span class="vel-signal">Stability at 2/10 combined with 118 mentions of 'terrible new UI' suggests a mass exodus of long-term users.</span>
+</div><div class="vel-row">
+  <span class="vel-name">Lose It!</span>
+  <span class="vel-badge vel-accel">ACCEL ↑</span>
+  <span class="vel-signal">Price score of 2/10 and reports of 'deceptive' registration processes are driving immediate post-onboarding churn.</span>
+</div><div class="vel-row">
+  <span class="vel-name">Cronometer</span>
+  <span class="vel-badge vel-stable">STABLE</span>
+  <span class="vel-signal">Maintains high stability (8/10) and speed (9/10), though support is trending downward (-2.0).</span>
+</div>
+  </div>
+</div></div></section><section class="panel" id="angles"><div class="panel-head"><span class="panel-num">09</span><h2 class="panel-title">Ad Angles</h2></div><div class="panel-body"><p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">
+  Hypotheses derived from review data. Use for A/B testing, not finished copy.
+</p>
+<div class="angles-grid"><div class="angle-card">
+  <button class="copy-btn" data-copy="&quot;Stop fighting your app. Just log your food.&quot; — Target: MFP users complaining about click depth. Exploits: The psychological trigger of 'digital friction' where the tool becomes an obstacle to the goal.">Copy</button>
+  <div class="angle-num">1</div>
+  <div class="angle-headline">&ldquo;Stop fighting your app. Just log your food.&rdquo;</div>
+  <div class="angle-rows">
+    <div class="angle-row">
+      <span class="angle-key">Audience</span>
+      <span class="angle-val">MFP users complaining about click depth</span>
+    </div>
+    <div class="angle-row">
+      <span class="angle-key">Exploits</span>
+      <span class="angle-val">The psychological trigger of 'digital friction' where the tool becomes an obstacle to the goal.</span>
+    </div>
+  </div>
+</div><div class="angle-card">
+  <button class="copy-btn" data-copy="&quot;Your barcodes shouldn't be a subscription.&quot; — Target: MFP and Lose It! users. Exploits: The psychological trigger of betrayal—moving a previously free, core utility behind a paywall.">Copy</button>
+  <div class="angle-num">2</div>
+  <div class="angle-headline">&ldquo;Your barcodes shouldn't be a subscription.&rdquo;</div>
+  <div class="angle-rows">
+    <div class="angle-row">
+      <span class="angle-key">Audience</span>
+      <span class="angle-val">MFP and Lose It! users</span>
+    </div>
+    <div class="angle-row">
+      <span class="angle-key">Exploits</span>
+      <span class="angle-val">The psychological trigger of betrayal—moving a previously free, core utility behind a paywall.</span>
+    </div>
+  </div>
+</div><div class="angle-card">
+  <button class="copy-btn" data-copy="&quot;Gold-standard data. Zero-friction interface.&quot; — Target: MFP Power Users. Exploits: Contrast: MFP users love the database (X) but hate the UI (Y). MacroFactor provides the precision of TDEE/Macros (X) without the clunky UI (not-Y).">Copy</button>
+  <div class="angle-num">3</div>
+  <div class="angle-headline">&ldquo;Gold-standard data. Zero-friction interface.&rdquo;</div>
+  <div class="angle-rows">
+    <div class="angle-row">
+      <span class="angle-key">Audience</span>
+      <span class="angle-val">MFP Power Users</span>
+    </div>
+    <div class="angle-row">
+      <span class="angle-key">Exploits</span>
+      <span class="angle-val">Contrast: MFP users love the database (X) but hate the UI (Y). MacroFactor provides the precision of TDEE/Macros (X) without the clunky UI (not-Y).</span>
+    </div>
+  </div>
+</div></div></div></section><section class="panel" id="sentiment"><div class="panel-head"><span class="panel-num">10</span><h2 class="panel-title">Review Sentiment</h2></div><div class="panel-body"><div class="chart-outer">
+  <div class="chart-title">Review sentiment by app</div>
+  <div class="chart-sub">% of each app's reviews that are positive (4-5★) vs negative (1-3★).
+    A competitor with 90%+ negative reviews is in structural decline.</div>
+  <div class="chart-wrap-lg"><canvas id="sentimentChart"></canvas></div>
+</div></div></section><section class="panel" id="friction"><div class="panel-head"><span class="panel-num">11</span><h2 class="panel-title">Competitor Friction</h2></div><div class="panel-body"><div class="chart-outer">
+  <div class="chart-title">Where rivals are losing users — by friction type</div>
+  <div class="chart-sub">
+    Each bar shows the total number of negative review mentions competitors received in that category this week.
+    The tallest bar (red) is where rivals are bleeding users the fastest — and where your messaging should hit hardest.
+  </div>
+  <div class="chart-wrap"><canvas id="frictionChart"></canvas></div>
+  <div class="friction-legend"><div class="friction-legend-item">
+  <div class="friction-legend-dot" style="background:var(--red)"></div>
+  <div>
+    <div class="friction-legend-label">Utility</div>
+    <div class="friction-legend-desc">Top pain: core app actions failing — searching, browsing, checkout, tracking orders.</div>
+    <div class="friction-legend-desc" style="color:var(--text-hi);margin-top:3px;font-style:italic">MyFitnessPal: New Ui Terrible (118) &middot; MyFitnessPal: Increased Click Depth (35)</div>
+  </div>
+</div><div class="friction-legend-item">
+  <div class="friction-legend-dot" style="background:var(--amber)"></div>
+  <div>
+    <div class="friction-legend-label">Monetization</div>
+    <div class="friction-legend-desc">Top pain: hidden fees, refund failures, return policy surprises, unfair charges.</div>
+    <div class="friction-legend-desc" style="color:var(--text-hi);margin-top:3px;font-style:italic">MyFitnessPal: Barcode Paywall (14) &middot; Lose It!: Barcode Paywall (3)</div>
+  </div>
+</div><div class="friction-legend-item">
+  <div class="friction-legend-dot" style="background:#8b5cf6"></div>
+  <div>
+    <div class="friction-legend-label">Performance</div>
+    <div class="friction-legend-desc">Top pain: crashes, slow loading, freezes, battery drain, offline failures.</div>
+    <div class="friction-legend-desc" style="color:var(--text-hi);margin-top:3px;font-style:italic">No mentions this week</div>
+  </div>
+</div><div class="friction-legend-item">
+  <div class="friction-legend-dot" style="background:var(--teal)"></div>
+  <div>
+    <div class="friction-legend-label">Setup</div>
+    <div class="friction-legend-desc">Top pain: login loops, onboarding errors, account creation failures.</div>
+    <div class="friction-legend-desc" style="color:var(--text-hi);margin-top:3px;font-style:italic">MyFitnessPal: Support Ai Failure (6) &middot; Lose It!: Excessive Onboarding Questions (4)</div>
+  </div>
+</div></div>
+</div></div></section><section class="panel" id="strengths"><div class="panel-head"><span class="panel-num">12</span><h2 class="panel-title">What Users Love Per App</h2></div><div class="panel-body"><p style="font-size:12.5px;color:var(--text-muted);margin-bottom:16px;line-height:1.7">
+  Green dots = our retention anchors. Amber dots = competitor strengths — things their users love
+  that we must match or exceed. If a competitor scores high on something we score low on, that is
+  a churn risk hiding in plain sight.
+</p>
+<div class="strengths-grid"><div class="strength-card">
+  <div class="strength-header">
+    <span class="strength-app-name" style="color:var(--teal)">MacroFactor</span>
+    <span class="strength-tag strength-ours">Our App</span>
+  </div>
+  
+  <div class="strength-item">
+  <div class="strength-dot"></div>
+  <div class="strength-text">
+    <strong>Accurate Macro Tracking</strong>
+    <span class="strength-count">1 mentions</span>
+    <br>Users praise the ability to use weight and calories to generate an accurate TDEE.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot"></div>
+  <div class="strength-text">
+    <strong>Recipe Photo Logging</strong>
+    <span class="strength-count">1 mentions</span>
+    <br>The addition of photo uploads for AI food scanning is highly valued.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot"></div>
+  <div class="strength-text">
+    <strong>Net Exercise Calorie Calculation</strong>
+    <span class="strength-count">1 mentions</span>
+    <br>Users appreciate the consistency gained by ignoring extra workout calories.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot"></div>
+  <div class="strength-text">
+    <strong>Quick Add</strong>
+    <span class="strength-count">1 mentions</span>
+    <br>Barcode scanning is cited as a game-changer that removes the burden of tracking.
+  </div>
+</div>
+</div><div class="strength-card">
+  <div class="strength-header">
+    <span class="strength-app-name" style="color:var(--text-hi)">MyFitnessPal</span>
+    <span class="strength-tag strength-comp">Competitor</span>
+  </div>
+  <div class="strength-caution">&#9888; These are things their users love — if we are weak here, it is a retention risk.</div>
+  <div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Weight Loss Efficacy</strong>
+    <span class="strength-count strength-comp-count">12 mentions</span>
+    <br>Users report significant health outcomes, specifically citing weight loss of 25kg, 45lbs, 60lbs, and 80lbs.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>International Food Database</strong>
+    <span class="strength-count strength-comp-count">9 mentions</span>
+    <br>Strong praise for the breadth and accuracy of the food database, making it easy to find almost any item.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Accurate Macro Tracking</strong>
+    <span class="strength-count strength-comp-count">7 mentions</span>
+    <br>Long-term users rely on the app for precise tracking of carbs, fats, and proteins to hit specific diet goals.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Core Tracking Simplicity</strong>
+    <span class="strength-count strength-comp-count">5 mentions</span>
+    <br>A subset of users find the new interface cleaner and more focused on the primary action of logging food.
+  </div>
+</div>
+</div><div class="strength-card">
+  <div class="strength-header">
+    <span class="strength-app-name" style="color:var(--text-hi)">Lose It!</span>
+    <span class="strength-tag strength-comp">Competitor</span>
+  </div>
+  <div class="strength-caution">&#9888; These are things their users love — if we are weak here, it is a retention risk.</div>
+  <div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Weight Loss Efficacy</strong>
+    <span class="strength-count strength-comp-count">6 mentions</span>
+    <br>Users report significant weight loss (ranging from 5 to 62 lbs), citing the app as a primary motivator and accountability tool.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Expanded Regional Food Database</strong>
+    <span class="strength-count strength-comp-count">3 mentions</span>
+    <br>Praise for a diverse and large variety of food entries compared to competing apps.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Quick Add</strong>
+    <span class="strength-count strength-comp-count">3 mentions</span>
+    <br>Users love the speed of logging, specifically mentioning '2 clicks' to add food and the app's ability to remember previous meals.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Comprehensive Health Tracking</strong>
+    <span class="strength-count strength-comp-count">2 mentions</span>
+    <br>Retention is driven by the ability to track not just calories, but body fat, measurements, and weight in one place.
+  </div>
+</div>
+</div><div class="strength-card">
+  <div class="strength-header">
+    <span class="strength-app-name" style="color:var(--text-hi)">Cronometer</span>
+    <span class="strength-tag strength-comp">Competitor</span>
+  </div>
+  <div class="strength-caution">&#9888; These are things their users love — if we are weak here, it is a retention risk.</div>
+  <div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Custom Nutrients Display</strong>
+    <span class="strength-count strength-comp-count">6 mentions</span>
+    <br>Users highly value the detailed tracking of micro-nutrients, vitamins, and the visual red/green indicators for nutrient targets.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>International Food Database</strong>
+    <span class="strength-count strength-comp-count">1 mentions</span>
+    <br>Specific praise for the inclusion of regional foods, such as Nigerian cuisine, reducing the need for custom entries.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Sync Integrations</strong>
+    <span class="strength-count strength-comp-count">1 mentions</span>
+    <br>Users appreciate the seamless integration with wearables like Garmin.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Customizable Nutrient Dashboard</strong>
+    <span class="strength-count strength-comp-count">2 mentions</span>
+    <br>Users love the ability to modify food categories and customize their tracking view.
+  </div>
+</div>
+</div></div></div></section><section class="panel" id="scores"><div class="panel-head"><span class="panel-num">13</span><h2 class="panel-title">Score Breakdown</h2></div><div class="panel-body"><div class="app-block card" style="overflow:hidden">
+  <div class="app-header">
+    <span class="app-name" style="color:var(--teal)">MacroFactor</span>
+    <span class="app-tag tag-ours">Our App</span>
+    <span style="font-size:11px;color:var(--text-muted);margin-left:8px">11 reviews</span>
+    <span class="conf-badge conf-low" style="margin-left:6px">low confidence</span>
+  </div>
+  <table class="score-table"><tr>
+  <td class="score-dim c-pos">Stability (9/10)<span class="wow wow-dn">↓1.0</span></td>
+  <td class="score-val">No reports of crashes, freezes, or app-load failures in the provided reviews.</td>
+</tr><tr>
+  <td class="score-dim c-neg">Speed (6/10)<span class="wow wow-dn">↓2.0</span></td>
+  <td class="score-val">General ease of use is praised, but the search functionality is explicitly called 'rubbish'.</td>
+</tr><tr>
+  <td class="score-dim c-pos">Price (4/10)<span class="wow wow-up">↑1.0</span></td>
+  <td class="score-val">Negative sentiment regarding the surprise paywall after onboarding and trial expiration delays.</td>
+</tr><tr>
+  <td class="score-dim c-pos">Features (8/10)</td>
+  <td class="score-val">Strong praise for TDEE calculations, AI photo logging, and barcode scanning.</td>
+</tr><tr>
+  <td class="score-dim c-neg">Support (3/10)<span class="wow wow-dn">↓2.0</span></td>
+  <td class="score-val">User expresses deep distrust in the roadmap ('the roadmap is just a lie') and trial management.</td>
+</tr></table>
+</div><div class="app-block card" style="overflow:hidden">
+  <div class="app-header">
+    <span class="app-name" style="color:var(--text-hi)">MyFitnessPal</span>
+    <span class="app-tag tag-comp">Competitor</span>
+    <span style="font-size:11px;color:var(--text-muted);margin-left:8px">621 reviews</span>
+    <span class="conf-badge conf-high" style="margin-left:6px">high confidence</span>
+  </div>
+  <table class="score-table"><tr>
+  <td class="score-dim ">Stability (2/10)</td>
+  <td class="score-val">Numerous reports of the app failing to open, crashing during recipe entry, and severe data duplication glitches.</td>
+</tr><tr>
+  <td class="score-dim ">Speed (3/10)<span class="wow wow-dn">↓1.0</span></td>
+  <td class="score-val">While raw load times are mentioned occasionally, the perceived speed is low due to the 'clunky' new UI and increased click depth.</td>
+</tr><tr>
+  <td class="score-dim ">Price (3/10)</td>
+  <td class="score-val">Multiple users call the subscription 'too expensive' or 'predatory', especially since basic features like barcode scanning were moved behind a paywall.</td>
+</tr><tr>
+  <td class="score-dim ">Features (5/10)<span class="wow wow-dn">↓1.0</span></td>
+  <td class="score-val">The food database remains a gold standard, but current sentiment is plummeted by the removal of essential utilities like the weekly start day setting.</td>
+</tr><tr>
+  <td class="score-dim ">Support (2/10)</td>
+  <td class="score-val">Users report feeling 'slapped in the face' by automated responses and a total lack of human intervention for billing and sync issues.</td>
+</tr></table>
+</div><div class="app-block card" style="overflow:hidden">
+  <div class="app-header">
+    <span class="app-name" style="color:var(--text-hi)">Lose It!</span>
+    <span class="app-tag tag-comp">Competitor</span>
+    <span style="font-size:11px;color:var(--text-muted);margin-left:8px">51 reviews</span>
+    <span class="conf-badge conf-med" style="margin-left:6px">medium confidence</span>
+  </div>
+  <table class="score-table"><tr>
+  <td class="score-dim ">Stability (8/10)<span class="wow wow-up">↑1.0</span></td>
+  <td class="score-val">No reports of hard crashes, though one user noted a failure to respond to system font sizes/screen readers.</td>
+</tr><tr>
+  <td class="score-dim ">Speed (7/10)<span class="wow wow-up">↑1.0</span></td>
+  <td class="score-val">Logging is praised as 'quick' and 'easy', but search functionality is described as 'bad' and requiring 'endless scrolling'.</td>
+</tr><tr>
+  <td class="score-dim ">Price (2/10)<span class="wow wow-dn">↓1.0</span></td>
+  <td class="score-val">Multiple users cite an $80 subscription as overpriced and describe the registration process as 'deceptive' marketing.</td>
+</tr><tr>
+  <td class="score-dim ">Features (8/10)<span class="wow wow-up">↑1.0</span></td>
+  <td class="score-val">Strong core functionality for food logging and weight tracking, though basics like the exercise DB are seen as 'bare minimum'.</td>
+</tr><tr>
+  <td class="score-dim ">Support (3/10)<span class="wow wow-dn">↓1.0</span></td>
+  <td class="score-val">Users report feeling trapped in subscriptions they cannot physically cancel, indicating a failure in billing support/UX.</td>
+</tr></table>
+</div><div class="app-block card" style="overflow:hidden">
+  <div class="app-header">
+    <span class="app-name" style="color:var(--text-hi)">Cronometer</span>
+    <span class="app-tag tag-comp">Competitor</span>
+    <span style="font-size:11px;color:var(--text-muted);margin-left:8px">34 reviews</span>
+    <span class="conf-badge conf-med" style="margin-left:6px">medium confidence</span>
+  </div>
+  <table class="score-table"><tr>
+  <td class="score-dim ">Stability (8/10)</td>
+  <td class="score-val">Generally stable, though one user reported a bug preventing screenshots and another cited HealthLink sync failure.</td>
+</tr><tr>
+  <td class="score-dim ">Speed (9/10)</td>
+  <td class="score-val">Multiple reviews describe the app as 'quick to use' and the logging process as 'easy' and 'fast'.</td>
+</tr><tr>
+  <td class="score-dim ">Price (6/10)</td>
+  <td class="score-val">Polarized feedback: some praise the free tier's value, while others explicitly call the subscription costs 'too high'.</td>
+</tr><tr>
+  <td class="score-dim ">Features (9/10)</td>
+  <td class="score-val">Extremely high marks for nutrient depth and customization, despite some bugs in the recipe editing tool.</td>
+</tr><tr>
+  <td class="score-dim ">Support (8/10)<span class="wow wow-dn">↓2.0</span></td>
+  <td class="score-val">Positive evidence of support responsiveness, with one user upgrading to 5 stars after receiving an actual solution.</td>
+</tr></table>
+</div></div></section>
+    <div class="report-footer">
+      Generated 2026-05-06 20:53 UTC &nbsp;&middot;&nbsp;
+      Public app store data &nbsp;&middot;&nbsp; Scores are directional signals, not benchmarks
+    </div>
+  </main>
+</div>
+
+<script>
+const sentimentData = {"labels": ["MacroFactor", "MyFitnessPal", "Lose It!", "Cronometer"], "pos": [63.6, 10.5, 43.1, 70.6], "neg": [36.4, 89.5, 56.9, 29.4], "pos_raw": [7, 65, 22, 24], "neg_raw": [4, 556, 29, 10]};
+const frictionData  = {"labels": ["Setup", "Utility", "Performance", "Monetization"], "values": [10, 209, 0, 31]};
+
+/* ── Mobile nav ── */
+function openNav() {
+  document.getElementById("sidebar").classList.add("open");
+  document.getElementById("navOverlay").classList.add("active");
+  document.body.style.overflow = "hidden";
+}
+function closeNav() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("navOverlay").classList.remove("active");
+  document.body.style.overflow = "";
+}
+
+/* ── Theme ── */
+(function() {
+  const saved = localStorage.getItem("ss-theme");
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const theme = saved || (prefersDark ? "dark" : "light");
+  document.documentElement.setAttribute("data-theme", theme);
+  document.getElementById("theme-btn").textContent = theme === "dark" ? "☀️" : "🌙";
+})();
+
+function toggleTheme() {
+  const cur  = document.documentElement.getAttribute("data-theme");
+  const next = cur === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  localStorage.setItem("ss-theme", next);
+  document.getElementById("theme-btn").textContent = next === "dark" ? "☀️" : "🌙";
+  redrawCharts();
+}
+
+/* ── Active nav ── */
+function navClick(el) {
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  el.classList.add("active");
+  closeNav();
+}
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      document.querySelectorAll(".nav-item").forEach(n => {
+        n.classList.toggle("active", n.getAttribute("href") === "#" + id);
+      });
+    }
+  });
+}, { rootMargin: "-15% 0px -75% 0px" });
+document.querySelectorAll(".panel").forEach(p => observer.observe(p));
+
+/* ── Copy buttons ── */
+document.querySelectorAll(".copy-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    navigator.clipboard.writeText(btn.dataset.copy).then(() => {
+      btn.textContent = "Copied!";
+      btn.classList.add("copied");
+      setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("copied"); }, 1800);
+    });
+  });
+});
+
+/* ── Charts ── */
+let sentChart, fricChart;
+
+function getColors() {
+  const dark = document.documentElement.getAttribute("data-theme") === "dark";
+  return {
+    text:  dark ? "#94a3b8" : "#64748b",
+    grid:  dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
+    teal:  "#0d9488",
+    red:   dark ? "#f87171" : "#dc2626",
+    green: dark ? "#10b981" : "#059669",
+  };
+}
+
+function drawCharts() {
+  const c = getColors();
+
+  const sc = document.getElementById("sentimentChart");
+  if (sc) {
+    sentChart = new Chart(sc.getContext("2d"), {
+      type: "bar",
+      data: {
+        labels: sentimentData.labels,
+        datasets: [
+          { label: "Negative (1-3★)", data: sentimentData.neg.map(v => -v),
+             backgroundColor: c.red, borderRadius: 4 },
+          { label: "Positive (4-5★)", data: sentimentData.pos,
+             backgroundColor: c.teal, borderRadius: 4 },
+        ]
+      },
+      options: {
+        indexAxis: "y", responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: {
+            ticks: { color: c.text, callback: v => Math.abs(v) + "%" },
+            grid: { color: c.grid },
+            min: -105, max: 105,
+          },
+          y: { ticks: { color: c.text }, grid: { display: false } }
+        },
+        plugins: {
+          legend: { position: "bottom", labels: { color: c.text, boxWidth: 10, font: { size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const raw = ctx.datasetIndex === 0
+                  ? sentimentData.neg_raw[ctx.dataIndex]
+                  : sentimentData.pos_raw[ctx.dataIndex];
+                return ` ${Math.abs(ctx.raw).toFixed(1)}% (${raw} reviews)`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  const fc = document.getElementById("frictionChart");
+  if (fc) {
+    const maxV = Math.max(...frictionData.values);
+    fricChart = new Chart(fc.getContext("2d"), {
+      type: "bar",
+      data: {
+        labels: frictionData.labels,
+        datasets: [{
+          data: frictionData.values,
+          backgroundColor: frictionData.values.map(v => v === maxV ? c.red : "rgba(13,148,136,0.35)"),
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        indexAxis: "y", responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.raw} mentions` } }
+        },
+        scales: {
+          x: { ticks: { color: c.text }, grid: { color: c.grid } },
+          y: { ticks: { color: c.text }, grid: { display: false } }
+        }
+      }
+    });
+  }
+}
+
+function redrawCharts() {
+  if (sentChart) sentChart.destroy();
+  if (fricChart)  fricChart.destroy();
+  drawCharts();
+}
+
+drawCharts();
+</script>
+</body>
+</html>

@@ -3,85 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SignalStrike - Competitive Intelligence Reports</title>
+    <title>SignalStrike - Competitive Intelligence Platform</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 40px 20px;
+        :root {
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --teal-dim: rgba(13,148,136,0.15);
+            --bg-page: #eef0f4;
+            --bg-surface: #ffffff;
+            --text-hi: #0f172a;
+            --text-body: #334155;
+            --text-muted: #64748b;
+            --border: rgba(0,0,0,0.08);
+            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+            --radius: 12px;
         }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', sans-serif;
+            background: var(--bg-page);
+            color: var(--text-body);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, var(--teal) 0%, var(--teal-light) 100%);
+            padding: 80px 20px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="60" height="60" xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1" fill="white" opacity="0.1"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .hero-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+            display: inline-block;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .hero p {
+            font-size: 20px;
+            opacity: 0.95;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            padding: 60px 20px;
         }
-        .header {
+        
+        .section-header {
             text-align: center;
-            color: white;
             margin-bottom: 48px;
         }
-        .header h1 {
-            font-size: 48px;
-            margin-bottom: 16px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
         }
-        .header p {
-            font-size: 20px;
-            opacity: 0.9;
+        
+        .section-subtitle {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-hi);
         }
+        
         .clients-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 24px;
         }
+        
         .client-card {
-            background: white;
-            border-radius: 12px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             padding: 32px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            transition: all 0.3s;
             text-decoration: none;
             color: inherit;
             display: block;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
         }
+        
+        .client-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--teal) 0%, var(--teal-light) 100%);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+        
         .client-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            box-shadow: 0 12px 24px rgba(13,148,136,0.15);
+            border-color: var(--teal);
         }
+        
+        .client-card:hover::before {
+            transform: scaleY(1);
+        }
+        
+        .client-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--teal-dim);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        
         .client-name {
             font-size: 24px;
-            font-weight: 600;
-            color: #1a202c;
+            font-weight: 700;
+            color: var(--text-hi);
             margin-bottom: 8px;
         }
+        
         .client-meta {
-            color: #718096;
+            color: var(--text-muted);
             font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 16px;
         }
-        .arrow {
-            color: #667eea;
-            font-size: 20px;
-            margin-top: 16px;
+        
+        .client-meta::before {
+            content: '📊';
+            font-size: 16px;
+        }
+        
+        .client-arrow {
+            color: var(--teal);
+            font-size: 24px;
+            transition: transform 0.3s;
+            display: inline-block;
+        }
+        
+        .client-card:hover .client-arrow {
+            transform: translateX(4px);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-muted);
+        }
+        
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+            opacity: 0.5;
+        }
+        
+        .empty-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-hi);
+            margin-bottom: 12px;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: 14px;
+            border-top: 1px solid var(--border);
+            margin-top: 60px;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 36px; }
+            .hero p { font-size: 18px; }
+            .clients-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
+    <div class="hero">
+        <div class="hero-content">
+            <div class="hero-icon">⚡</div>
+            <h1>SignalStrike</h1>
+            <p>Competitive Intelligence Platform - Transform app store reviews into actionable market strategy</p>
+        </div>
+    </div>
+    
     <div class="container">
-        <div class="header">
-            <h1>⚡ SignalStrike</h1>
-            <p>Competitive Intelligence Reports</p>
+        <div class="section-header">
+            <div class="section-title">Intelligence Dashboard</div>
+            <div class="section-subtitle">Active Clients</div>
         </div>
         
         <div class="clients-grid">
 
             <a href="com-client-macrofactor/index.html" class="client-card">
-                <div class="client-name">Com Client Macrofactor</div>
+                <div class="client-icon">M</div>
+                <div class="client-name">Macrofactor</div>
                 <div class="client-meta">Latest: May 06, 2026</div>
-                <div class="arrow">→</div>
+                <div class="client-arrow">→</div>
             </a>
 
         </div>
+    </div>
+    
+    <div class="footer">
+        <p>Powered by SignalStrike Intelligence Platform</p>
     </div>
 </body>
 </html>

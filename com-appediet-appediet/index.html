@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Calorie Counter - Appediet - SignalStrike Intelligence</title>
+    <style>
+        :root {
+            --teal: #0d9488;
+            --teal-light: #14b8a6;
+            --teal-dim: rgba(13,148,136,0.15);
+            --bg-page: #eef0f4;
+            --bg-surface: #ffffff;
+            --text-hi: #0f172a;
+            --text-body: #334155;
+            --text-muted: #64748b;
+            --border: rgba(0,0,0,0.08);
+            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+            --radius: 12px;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', sans-serif;
+            background: var(--bg-page);
+            color: var(--text-body);
+            line-height: 1.6;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: var(--bg-surface);
+            border-radius: var(--radius);
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--teal) 0%, var(--teal-light) 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 20px;
+        }
+        
+        .brand-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-hi);
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+        
+        .reports-section {
+            background: var(--bg-surface);
+            border-radius: var(--radius);
+            padding: 32px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--teal-dim);
+        }
+        
+        .report-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .report-item {
+            background: var(--bg-page);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.2s ease;
+            display: block;
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .report-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(13,148,136,0.15);
+            border-color: var(--teal);
+        }
+        
+        .report-date {
+            font-size: 13px;
+            color: var(--teal);
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .report-date::before {
+            content: "📊";
+            font-size: 16px;
+        }
+        
+        .report-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-hi);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .report-arrow {
+            color: var(--teal);
+            font-size: 20px;
+            transition: transform 0.2s;
+        }
+        
+        .report-item:hover .report-arrow {
+            transform: translateX(4px);
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 24px;
+            padding: 12px 20px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-body);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .back-link:hover {
+            background: var(--teal-dim);
+            border-color: var(--teal);
+            color: var(--teal);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="brand">
+                <div class="brand-icon">⚡</div>
+                <div class="brand-text">SignalStrike Intelligence</div>
+            </div>
+            <h1>AI Calorie Counter - Appediet</h1>
+            <p class="subtitle">Weekly Competitive Intelligence Reports</p>
+        </div>
+        
+        <div class="reports-section">
+            <div class="section-title">Report History</div>
+<ul class="report-list">
+                <a href="report_20260509.html" class="report-item">
+                    <div class="report-date">May 09, 2026</div>
+                    <div class="report-title">
+                        <span>Weekly Intelligence Brief</span>
+                        <span class="report-arrow">→</span>
+                    </div>
+                </a>
+</ul>
+        </div>
+        
+        <a href="../index.html" class="back-link">
+            <span>←</span>
+            <span>All Clients</span>
+        </a>
+    </div>
+</body>
+</html>

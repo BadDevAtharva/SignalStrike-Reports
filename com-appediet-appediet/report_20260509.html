@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SignalStrike &mdash; AI Calorie Counter - Appediet</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ── Design Tokens ── */
+:root {
+  --teal:       #0d9488;
+  --teal-light: #14b8a6;
+  --teal-dim:   rgba(13,148,136,0.15);
+  --teal-glow:  rgba(13,148,136,0.08);
+  --teal-mid:   rgba(13,148,136,0.35);
+
+  --bg-page:    #eef0f4;
+  --bg-surface: #ffffff;
+  --bg-raised:  #f8fafc;
+  --bg-input:   #f1f5f9;
+
+  --border:     rgba(0,0,0,0.08);
+  --border-med: rgba(0,0,0,0.14);
+  --border-strong: rgba(0,0,0,0.22);
+
+  --text-hi:    #0f172a;
+  --text-body:  #334155;
+  --text-muted: #64748b;
+  --text-faint: #94a3b8;
+
+  --green:  #059669; --green-bg:  rgba(5,150,105,0.1);
+  --red:    #dc2626; --red-bg:    rgba(220,38,38,0.1);
+  --amber:  #d97706; --amber-bg:  rgba(217,119,6,0.1);
+
+  --nav-w:   230px;
+  --topbar-h: 56px;
+  --radius:   12px;
+  --radius-sm: 7px;
+  --shadow:   0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.1);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+[data-theme="dark"] {
+  --bg-page:    #090c12;
+  --bg-surface: #111827;
+  --bg-raised:  #1a2235;
+  --bg-input:   #1e293b;
+
+  --border:     rgba(255,255,255,0.07);
+  --border-med: rgba(255,255,255,0.12);
+  --border-strong: rgba(255,255,255,0.2);
+
+  --text-hi:    #f1f5f9;
+  --text-body:  #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-faint: #475569;
+
+  --green:  #10b981; --green-bg:  rgba(16,185,129,0.12);
+  --red:    #f87171; --red-bg:    rgba(248,113,113,0.12);
+  --amber:  #fbbf24; --amber-bg:  rgba(251,191,36,0.12);
+
+  --shadow:   0 1px 3px rgba(0,0,0,0.5);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.5);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  background: var(--bg-page);
+  color: var(--text-body);
+  font-size: 14px;
+  line-height: 1.65;
+  min-height: 100vh;
+}
+
+/* ── Top bar ── */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  height: var(--topbar-h);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 20px;
+  gap: 14px;
+  box-shadow: var(--shadow);
+}
+.topbar-brand {
+  display: flex; align-items: center; gap: 10px; text-decoration: none; flex-shrink: 0;
+}
+.topbar-logo {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--teal) 0%, #0f766e 100%);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 900; color: #fff; letter-spacing: -0.5px;
+  box-shadow: 0 2px 8px rgba(13,148,136,0.35);
+}
+.topbar-name {
+  font-size: 16px; font-weight: 800; color: var(--text-hi);
+  letter-spacing: -0.5px;
+}
+.topbar-divider {
+  width: 1px; height: 24px; background: var(--border-med); flex-shrink: 0;
+}
+.topbar-meta {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.topbar-chip {
+  font-size: 11px; color: var(--text-muted);
+  background: var(--bg-raised);
+  border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px;
+  white-space: nowrap;
+}
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.action-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--teal); color: #fff;
+  padding: 7px 16px; border-radius: 8px; font-size: 12px; font-weight: 700;
+  text-decoration: none; border: none; cursor: pointer;
+  transition: opacity .15s, transform .1s;
+  box-shadow: 0 2px 8px rgba(13,148,136,0.3);
+}
+.action-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+.theme-toggle {
+  width: 36px; height: 36px; border-radius: 9px;
+  background: var(--bg-raised); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 16px; transition: background .15s;
+}
+.theme-toggle:hover { background: var(--bg-input); }
+.hamburger {
+  display: none;
+  width: 36px; height: 36px; border-radius: 9px;
+  background: var(--bg-raised); border: 1px solid var(--border);
+  align-items: center; justify-content: center;
+  cursor: pointer; font-size: 18px; color: var(--text-muted);
+}
+
+/* ── Layout ── */
+.layout {
+  display: flex;
+  padding-top: var(--topbar-h);
+  min-height: 100vh;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: var(--nav-w);
+  flex-shrink: 0;
+  position: fixed;
+  top: var(--topbar-h); bottom: 0; left: 0;
+  overflow-y: auto;
+  padding: 20px 12px 40px;
+  border-right: 1px solid var(--border);
+  background: var(--bg-surface);
+  display: flex; flex-direction: column; gap: 2px;
+  z-index: 100;
+  transition: transform .25s cubic-bezier(.4,0,.2,1);
+}
+.sidebar-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--text-faint);
+  padding: 6px 10px 8px; margin-bottom: 2px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 8px;
+  text-decoration: none; color: var(--text-muted); font-size: 12.5px;
+  transition: background .12s, color .12s;
+  cursor: pointer;
+}
+.nav-item:hover { background: var(--bg-raised); color: var(--text-hi); }
+.nav-item.active {
+  background: var(--teal-glow);
+  color: var(--teal);
+  font-weight: 600;
+}
+.nav-num {
+  width: 20px; height: 20px; border-radius: 6px;
+  background: var(--bg-input); border: 1px solid var(--border);
+  font-size: 10px; font-weight: 700; color: var(--text-faint);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all .12s;
+}
+.nav-item.active .nav-num {
+  background: var(--teal); border-color: var(--teal);
+  color: #fff;
+}
+.nav-label { flex: 1; }
+
+/* ── Overlay for mobile nav ── */
+.nav-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 99;
+  background: rgba(0,0,0,0.45);
+}
+.nav-overlay.active { display: block; }
+
+/* ── Main content ── */
+.main {
+  margin-left: var(--nav-w);
+  flex: 1;
+  padding: 36px 36px 100px;
+  max-width: calc(860px + var(--nav-w));
+  width: 100%;
+}
+
+/* ── Panel (each section) — the KEY fix ── */
+.panel {
+  margin-bottom: 0;
+  padding-top: 52px;   /* breathing room above each section */
+  scroll-margin-top: calc(var(--topbar-h) + 16px);
+}
+
+/* Section separator — visible horizontal rule between sections */
+.panel + .panel {
+  border-top: 2px solid var(--border-med);
+}
+
+/* Section header */
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-num {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--teal);
+  background: var(--teal-dim);
+  border: 1.5px solid var(--teal-mid);
+  border-radius: 8px;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: -0.3px;
+}
+
+.panel-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-hi);
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  /* Left accent bar */
+  padding-left: 14px;
+  border-left: 4px solid var(--teal);
+}
+
+.panel-body {
+  /* Content sits below the header with clear separation */
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.card-body { padding: 20px 22px; }
+.card + .card { margin-top: 10px; }
+.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ── Decision hero ── */
+.decision-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-med);
+  border-left: 5px solid var(--teal);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  box-shadow: var(--shadow-md);
+}
+.decision-eyebrow {
+  font-size: 10px; font-weight: 800; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--teal); margin-bottom: 10px;
+}
+.decision-text {
+  font-size: 18px; font-weight: 700; color: var(--text-hi); line-height: 1.5;
+}
+
+/* ── Metric strip ── */
+.metric-strip {
+  display: grid;
+  grid-template-columns: auto repeat(5, 1fr);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.posture-block {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 18px 22px; min-width: 96px;
+  background: rgba(217,119,6,0.12);
+}
+.posture-word {
+  font-size: 11px; font-weight: 900; letter-spacing: 0.12em;
+  text-transform: uppercase; color: #d97706;
+}
+.posture-gap {
+  font-size: 28px; font-weight: 800; color: #d97706;
+  line-height: 1; margin: 2px 0;
+}
+.posture-sublabel { font-size: 9px; color: var(--text-muted); }
+.dim-col {
+  border-left: 1px solid var(--border);
+  padding: 14px 6px; text-align: center;
+}
+.dim-name { font-size: 9px; font-weight: 700; text-transform: uppercase;
+             letter-spacing: 0.06em; color: var(--text-faint); margin-bottom: 6px; }
+.dim-delta { font-size: 20px; font-weight: 800; line-height: 1; }
+.dim-compare { font-size: 10px; color: var(--text-faint); margin-top: 4px; }
+.c-pos { color: var(--green); }
+.c-neg { color: var(--red); }
+.c-neu { color: var(--text-muted); }
+
+/* ── Situation ── */
+.verdict-text {
+  font-size: 14px; color: var(--text-body); line-height: 1.8;
+}
+
+/* ── Info blocks ── */
+.info-block { margin-bottom: 16px; }
+.info-label {
+  font-size: 10px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-faint); margin-bottom: 6px;
+}
+.info-value { font-size: 14px; color: var(--text-hi); line-height: 1.65; }
+.opp-title {
+  font-size: 17px; font-weight: 700; color: var(--text-hi);
+  margin-bottom: 6px; line-height: 1.4;
+}
+.opp-competitor {
+  display: inline-block; font-size: 11px; font-weight: 700;
+  background: var(--red-bg); color: var(--red);
+  padding: 3px 10px; border-radius: 20px; margin-bottom: 16px;
+}
+
+/* ── Persona grid ── */
+.persona-table { width: 100%; border-collapse: collapse; }
+.persona-table tr { border-bottom: 1px solid var(--border); }
+.persona-table tr:last-child { border-bottom: none; }
+.persona-table td { padding: 12px 16px; vertical-align: top; }
+.persona-table .pk {
+  font-size: 10px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--teal); white-space: nowrap;
+  width: 150px; padding-right: 16px;
+}
+.persona-table .pv { font-size: 13.5px; color: var(--text-hi); line-height: 1.6; }
+
+/* ── Love items ── */
+.love-row {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.love-row:last-child { border-bottom: none; }
+.love-icon {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: var(--teal-dim);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 16px;
+}
+.love-tag { font-size: 13.5px; font-weight: 700; color: var(--text-hi); }
+.love-count { font-size: 11px; color: var(--teal); font-weight: 700; margin-left: 8px; }
+.love-sum { font-size: 12px; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
+
+/* ── Graveyard ── */
+.grav-row {
+  padding: 14px 0; border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.grav-row:last-child { border-bottom: none; }
+.grav-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.grav-title { font-size: 14.5px; font-weight: 700; color: var(--text-hi); }
+.grav-meta { font-size: 11.5px; color: var(--text-muted); }
+.effort {
+  font-size: 10px; font-weight: 800; padding: 3px 9px; border-radius: 5px;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.effort-low  { background: var(--green-bg); color: var(--green); }
+.effort-med  { background: var(--amber-bg); color: var(--amber); }
+.effort-high { background: var(--red-bg);   color: var(--red); }
+.grav-reason { font-size: 12.5px; color: var(--text-muted); line-height: 1.65; }
+
+/* ── Risk register ── */
+.risk-row {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 14px 0; border-bottom: 1px solid var(--border);
+}
+.risk-row:last-child { border-bottom: none; }
+.severity {
+  font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 6px;
+  text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap;
+  flex-shrink: 0; margin-top: 1px;
+}
+.sev-high { background: var(--red-bg);   color: var(--red); }
+.sev-med  { background: var(--amber-bg); color: var(--amber); }
+.sev-low  { background: var(--green-bg); color: var(--green); }
+.risk-title { font-size: 13.5px; font-weight: 600; color: var(--text-hi); margin-bottom: 4px; }
+.risk-mit { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+/* ── Velocity ── */
+.vel-row {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.vel-row:last-child { border-bottom: none; }
+.vel-name { font-size: 13.5px; font-weight: 700; color: var(--text-hi); min-width: 140px; }
+.vel-badge {
+  font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 6px;
+  text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0;
+}
+.vel-accel  { background: var(--red-bg);   color: var(--red); }
+.vel-stable { background: var(--amber-bg); color: var(--amber); }
+.vel-slow   { background: var(--green-bg); color: var(--green); }
+.vel-signal { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; flex: 1; }
+
+/* ── Ad angle cards ── */
+.angles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+.angle-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--teal);
+  border-radius: var(--radius);
+  padding: 20px;
+  position: relative;
+  box-shadow: var(--shadow);
+  transition: box-shadow .15s, transform .15s;
+}
+.angle-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.angle-num {
+  width: 24px; height: 24px; border-radius: 7px;
+  background: var(--teal); color: #fff;
+  font-size: 12px; font-weight: 800;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-bottom: 12px;
+}
+.angle-headline {
+  font-size: 16px; font-weight: 700; color: var(--text-hi);
+  margin-bottom: 14px; line-height: 1.4;
+}
+.angle-rows { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.angle-row { display: flex; gap: 8px; }
+.angle-key {
+  font-size: 10px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--text-faint);
+  min-width: 66px; padding-top: 1px; flex-shrink: 0;
+}
+.angle-val { font-size: 12.5px; color: var(--text-muted); flex: 1; line-height: 1.55; }
+.copy-btn {
+  position: absolute; top: 16px; right: 16px;
+  background: var(--bg-raised); border: 1px solid var(--border);
+  color: var(--text-muted); padding: 5px 12px;
+  border-radius: 7px; font-size: 11px; font-weight: 600;
+  cursor: pointer; transition: all .15s;
+}
+.copy-btn:hover { background: var(--teal-dim); color: var(--teal); border-color: var(--teal); }
+.copy-btn.copied { background: var(--green-bg); color: var(--green); border-color: var(--green); }
+
+/* ── Charts ── */
+.chart-outer {
+  background: var(--bg-surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 22px 24px;
+}
+.chart-title {
+  font-size: 14px; font-weight: 700; color: var(--text-hi); margin-bottom: 4px;
+}
+.chart-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.6; }
+.chart-wrap    { position: relative; height: 200px; }
+.chart-wrap-lg { position: relative; height: 250px; }
+
+/* ── App strengths (What Users Love Per App) ── */
+.strengths-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.strength-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.strength-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px 10px;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border);
+}
+.strength-app-name { font-size: 13px; font-weight: 800; }
+.strength-tag {
+  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+}
+.strength-ours { background: var(--teal-dim); color: var(--teal); }
+.strength-comp { background: var(--bg-input); color: var(--text-muted); }
+.strength-caution {
+  font-size: 11px; color: var(--amber); background: var(--amber-bg);
+  padding: 7px 14px; border-bottom: 1px solid var(--border);
+  font-style: italic; line-height: 1.5;
+}
+.strength-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+}
+.strength-item:last-child { border-bottom: none; }
+.strength-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--teal); flex-shrink: 0; margin-top: 5px;
+}
+.strength-comp-dot {
+  background: var(--amber);
+}
+.strength-text { font-size: 12.5px; color: var(--text-body); line-height: 1.55; flex: 1; }
+.strength-count { font-size: 11px; font-weight: 700; color: var(--teal); white-space: nowrap; margin-left: 4px; }
+.strength-comp-count { color: var(--amber); }
+
+/* ── Friction chart with legend ── */
+.friction-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.friction-legend-item {
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.friction-legend-dot {
+  width: 10px; height: 10px; border-radius: 3px;
+  flex-shrink: 0; margin-top: 3px;
+}
+.friction-legend-label { font-size: 11.5px; font-weight: 700; color: var(--text-hi); margin-bottom: 2px; }
+.friction-legend-desc  { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+
+/* ── Score breakdown ── */
+.app-block { margin-bottom: 12px; }
+.app-header {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 14px 22px 12px; border-bottom: 1px solid var(--border);
+  background: var(--bg-raised);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.app-name { font-size: 15px; font-weight: 800; }
+.app-tag {
+  font-size: 10px; font-weight: 700; padding: 3px 9px;
+  border-radius: 20px; margin-left: auto;
+}
+.tag-ours { background: var(--teal-dim); color: var(--teal); }
+.tag-comp { background: var(--bg-input); color: var(--text-muted); }
+.conf-badge { font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+.conf-high { background: var(--green-bg); color: var(--green); }
+.conf-med  { background: var(--amber-bg); color: var(--amber); }
+.conf-low  { background: var(--red-bg);   color: var(--red); }
+.score-table { width: 100%; border-collapse: collapse; }
+.score-table tr { border-bottom: 1px solid var(--border); }
+.score-table tr:last-child { border-bottom: none; }
+.score-table td { padding: 10px 22px; vertical-align: top; }
+.score-dim { font-size: 12.5px; font-weight: 700; width: 165px; white-space: nowrap; }
+.score-val { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+.wow { font-size: 11px; font-weight: 700; margin-left: 6px; }
+.wow-up { color: var(--green); } .wow-dn { color: var(--red); }
+
+/* ── Footer ── */
+.report-footer {
+  margin-top: 60px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--text-faint); text-align: center;
+}
+
+/* ── Scrollbar ── */
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border-med); border-radius: 4px; }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .topbar-divider { display: none; }
+  .topbar-meta { display: none; }
+}
+
+@media (max-width: 700px) {
+  :root { --nav-w: 260px; }
+
+  .hamburger { display: flex; }
+
+  .sidebar {
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-lg);
+    z-index: 150;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main {
+    margin-left: 0;
+    padding: 20px 16px 80px;
+  }
+
+  .metric-strip {
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto;
+  }
+  .posture-block {
+    grid-column: 1 / -1;
+    flex-direction: row; gap: 12px; justify-content: center;
+    padding: 14px;
+  }
+
+  .card-grid { grid-template-columns: 1fr; }
+
+  .angles-grid { grid-template-columns: 1fr; }
+
+  .panel-title { font-size: 18px; }
+
+  .vel-name { min-width: 100px; }
+
+  .persona-table .pk { width: 110px; }
+}
+
+@media (max-width: 480px) {
+  .topbar-name { font-size: 14px; }
+  .metric-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+  .panel-title { font-size: 16px; padding-left: 10px; }
+  .panel-num { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Overlay for mobile nav -->
+<div class="nav-overlay" id="navOverlay" onclick="closeNav()"></div>
+
+<header class="topbar">
+  <button class="hamburger" onclick="openNav()" title="Open navigation">&#9776;</button>
+  <div class="topbar-brand">
+    <div class="topbar-logo">SS</div>
+    <span class="topbar-name">SignalStrike</span>
+  </div>
+  <div class="topbar-divider"></div>
+  <div class="topbar-meta">
+    <span class="topbar-chip">AI Calorie Counter - Appediet</span>
+    <span class="topbar-chip">Nutrition &amp; Diet</span>
+    <span class="topbar-chip">May 09, 2026</span>
+  </div>
+  <div class="topbar-right">
+    <a class="action-btn" href="https://github.com/BadDevAtharva/SignalStrike-Reports/releases/download/com-appediet-appediet-20260509/SignalStrike_AI.Calorie.Counter.-.Appediet_20260509.pdf" download>&#8595; PDF</a>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" id="theme-btn">🌙</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-label">Report Sections</div>
+    <a class="nav-item" href="#decision" onclick="navClick(this)"><span class="nav-num">1</span><span class="nav-label">This Week's Decision</span></a><a class="nav-item" href="#situation" onclick="navClick(this)"><span class="nav-num">2</span><span class="nav-label">Situation</span></a><a class="nav-item" href="#opportunity" onclick="navClick(this)"><span class="nav-num">3</span><span class="nav-label">Primary Opportunity</span></a><a class="nav-item" href="#persona" onclick="navClick(this)"><span class="nav-num">4</span><span class="nav-label">Switcher Persona</span></a><a class="nav-item" href="#anchors" onclick="navClick(this)"><span class="nav-num">5</span><span class="nav-label">What Our Users Love</span></a><a class="nav-item" href="#graveyard" onclick="navClick(this)"><span class="nav-num">6</span><span class="nav-label">Goliath Graveyard</span></a><a class="nav-item" href="#risks" onclick="navClick(this)"><span class="nav-num">7</span><span class="nav-label">Risk Register</span></a><a class="nav-item" href="#velocity" onclick="navClick(this)"><span class="nav-num">8</span><span class="nav-label">Churn Velocity</span></a><a class="nav-item" href="#angles" onclick="navClick(this)"><span class="nav-num">9</span><span class="nav-label">Ad Angles</span></a><a class="nav-item" href="#sentiment" onclick="navClick(this)"><span class="nav-num">10</span><span class="nav-label">Review Sentiment</span></a><a class="nav-item" href="#friction" onclick="navClick(this)"><span class="nav-num">11</span><span class="nav-label">Competitor Friction</span></a><a class="nav-item" href="#strengths" onclick="navClick(this)"><span class="nav-num">12</span><span class="nav-label">What Users Love Per App</span></a><a class="nav-item" href="#scores" onclick="navClick(this)"><span class="nav-num">13</span><span class="nav-label">Score Breakdown</span></a>
+  </nav>
+
+  <main class="main">
+    <section class="panel" id="decision"><div class="panel-head"><span class="panel-num">01</span><h2 class="panel-title">This Week's Decision</h2></div><div class="panel-body"><div class="decision-card">
+  <div class="decision-eyebrow">&#9654; Action required this week</div>
+  <div class="decision-text">Audit and resolve the subscription onboarding flow and billing support response time to eliminate the friction points mentioned by 4 users.</div>
+</div></div></section><section class="panel" id="situation"><div class="panel-head"><span class="panel-num">02</span><h2 class="panel-title">Situation</h2></div><div class="panel-body"><div class="metric-strip">
+  <div class="posture-block">
+    <div class="posture-word">DEFENSE</div>
+    <div class="posture-gap">+0.00</div>
+    <div class="posture-sublabel">gap score</div>
+  </div>
+  <div class="dim-col">
+  <div class="dim-name">Stability</div>
+  <div class="dim-delta c-neu">+0.0</div>
+  <div class="dim-compare">4.0 vs 4.0</div>
+</div><div class="dim-col">
+  <div class="dim-name">Speed</div>
+  <div class="dim-delta c-pos">+0.7</div>
+  <div class="dim-compare">6.0 vs 5.3</div>
+</div><div class="dim-col">
+  <div class="dim-name">Price</div>
+  <div class="dim-delta c-neg">-1.0</div>
+  <div class="dim-compare">2.0 vs 3.0</div>
+</div><div class="dim-col">
+  <div class="dim-name">Features</div>
+  <div class="dim-delta c-neg">-1.3</div>
+  <div class="dim-compare">5.0 vs 6.3</div>
+</div><div class="dim-col">
+  <div class="dim-name">Support</div>
+  <div class="dim-delta c-pos">+1.7</div>
+  <div class="dim-compare">3.0 vs 1.3</div>
+</div>
+</div>
+<div class="card">
+  <div class="card-body">
+    <div class="verdict-text">Sentiment gap is +0.00, dictating a DEFENSE posture. While competitors are failing, Appediet has internal subscription friction (4 mentions) and billing failures (2 mentions) that must be resolved to avoid mirroring rival 'scam' narratives. The highest-signal failure is the systemic collapse of customer support across Cal AI and Healthify AI, with reported wait times of six weeks.</div>
+  </div>
+</div></div></section><section class="panel" id="opportunity"><div class="panel-head"><span class="panel-num">03</span><h2 class="panel-title">Primary Opportunity</h2></div><div class="panel-body"><div class="card">
+  <div class="card-body">
+    <div class="opp-competitor">Cal AI - Food Calorie Tracker</div>
+    <div class="opp-title">Monetization transparency and subscription management</div>
+    <div class="info-block">
+      <div class="info-label">Who it hurts</div>
+      <div class="info-value">12 reviews label the app a 'scam' due to immediate charges and lack of trial notifications.</div>
+    </div>
+    <div class="info-block" style="margin-bottom:0">
+      <div class="info-label">Why they won't fix it</div>
+      <div class="info-value">The current revenue model relies on high-friction 'dark patterns' for immediate LTV capture, making transparency a direct threat to their short-term KPIs.</div>
+    </div>
+  </div>
+</div></div></section><section class="panel" id="persona"><div class="panel-head"><span class="panel-num">04</span><h2 class="panel-title">Switcher Persona</h2></div><div class="panel-body"><div class="card">
+  <div class="card-body" style="padding:0">
+    <table class="persona-table"><tr>
+  <td class="pk">User type</td>
+  <td class="pv">The Betrayed Optimizer</td>
+</tr><tr>
+  <td class="pk">Trigger</td>
+  <td class="pv">Charged a high monthly fee (up to $50) without clear notification or trial period.</td>
+</tr><tr>
+  <td class="pk">Search intent</td>
+  <td class="pv">Cal AI refund or alternative AI calorie tracker with transparent pricing</td>
+</tr><tr>
+  <td class="pk">Feature to show</td>
+  <td class="pv">Transparent billing and high AI food identification accuracy (95%).</td>
+</tr></table>
+  </div>
+</div></div></section><section class="panel" id="anchors"><div class="panel-head"><span class="panel-num">05</span><h2 class="panel-title">What Our Users Love</h2></div><div class="panel-body"><div class="card">
+  <div class="card-body" style="padding-bottom:4px">
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">
+      Retention anchors. Do not break these. Use as proof points in ads.
+    </p>
+    <div class="love-row">
+  <div class="love-icon">⭐</div>
+  <div>
+    <div><span class="love-tag">Food Identification Accuracy</span><span class="love-count">1 mentions</span></div>
+    <div class="love-sum">Users report high accuracy in AI food identification (approximately 95% success rate).</div>
+  </div>
+</div><div class="love-row">
+  <div class="love-icon">🚀</div>
+  <div>
+    <div><span class="love-tag">General Usability</span><span class="love-count">3 mentions</span></div>
+    <div class="love-sum">Users describe the app as 'very comfortable', 'amazing', and 'helpful'.</div>
+  </div>
+</div>
+  </div>
+</div></div></section><section class="panel" id="graveyard"><div class="panel-head"><span class="panel-num">06</span><h2 class="panel-title">Goliath Graveyard</h2></div><div class="panel-body"><div class='card'><div class='card-body' style='color:var(--text-muted)'>No escalated signals this week — more data next run.</div></div></div></section><section class="panel" id="risks"><div class="panel-head"><span class="panel-num">07</span><h2 class="panel-title">Risk Register</h2></div><div class="panel-body"><div class="card"><div class="card-body"><div class="risk-row">
+  <span class="severity sev-high">high</span>
+  <div>
+    <div class="risk-title">Billing support failures mirroring competitor 'scam' perception</div>
+    <div class="risk-mit">Mitigation: Implement a 24-hour guaranteed response SLA for all billing-related tickets.</div>
+  </div>
+</div><div class="risk-row">
+  <span class="severity sev-med">medium</span>
+  <div>
+    <div class="risk-title">Feature gap in multi-modal input (voice/barcode) compared to SnapCalorie</div>
+    <div class="risk-mit">Mitigation: Leverage existing 95% AI ID accuracy in marketing while prioritizing barcode integration in the roadmap.</div>
+  </div>
+</div><div class="risk-row">
+  <span class="severity sev-high">high</span>
+  <div>
+    <div class="risk-title">Subscription friction during onboarding</div>
+    <div class="risk-mit">Mitigation: Simplify the paywall transition and add clear trial expiration reminders.</div>
+  </div>
+</div></div></div></div></section><section class="panel" id="velocity"><div class="panel-head"><span class="panel-num">08</span><h2 class="panel-title">Churn Velocity</h2></div><div class="panel-body"><div class="card">
+  <div class="card-body">
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">
+      ACCEL = leaving faster than last week — act now. &nbsp;
+      STABLE = consistent bleed, window open. &nbsp;
+      SLOWING = may be recovering.
+    </p>
+    <div class="vel-row">
+  <span class="vel-name">Cal AI - Food Calorie Tracker</span>
+  <span class="vel-badge vel-accel">ACCEL ↑</span>
+  <span class="vel-signal">Combination of 1/10 price sentiment and 2/10 stability leading to 'scam' labeling.</span>
+</div><div class="vel-row">
+  <span class="vel-name">Healthify AI Weight Loss Coach</span>
+  <span class="vel-badge vel-accel">ACCEL ↑</span>
+  <span class="vel-signal">Aggressive monetization paired with 1/10 support and reports of ignored emails.</span>
+</div><div class="vel-row">
+  <span class="vel-name">SnapCalorie</span>
+  <span class="vel-badge vel-stable">STABLE</span>
+  <span class="vel-signal">Strong feature set (9/10) offsetting a decline in UI simplicity.</span>
+</div>
+  </div>
+</div></div></section><section class="panel" id="angles"><div class="panel-head"><span class="panel-num">09</span><h2 class="panel-title">Ad Angles</h2></div><div class="panel-body"><p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">
+  Hypotheses derived from review data. Use for A/B testing, not finished copy.
+</p>
+<div class="angles-grid"><div class="angle-card">
+  <button class="copy-btn" data-copy="&quot;AI Accuracy You Can Trust, Pricing That's Honest&quot; — Target: Cal AI users feeling exploited. Exploits: Contrast: Users love the AI concept but hate the 'scam' billing. We provide 95% AI accuracy without the hidden charges.">Copy</button>
+  <div class="angle-num">1</div>
+  <div class="angle-headline">&ldquo;AI Accuracy You Can Trust, Pricing That's Honest&rdquo;</div>
+  <div class="angle-rows">
+    <div class="angle-row">
+      <span class="angle-key">Audience</span>
+      <span class="angle-val">Cal AI users feeling exploited</span>
+    </div>
+    <div class="angle-row">
+      <span class="angle-key">Exploits</span>
+      <span class="angle-val">Contrast: Users love the AI concept but hate the 'scam' billing. We provide 95% AI accuracy without the hidden charges.</span>
+    </div>
+  </div>
+</div><div class="angle-card">
+  <button class="copy-btn" data-copy="&quot;Stop Waiting Weeks For A Support Reply&quot; — Target: Healthify AI and Cal AI users. Exploits: Psychological trigger: Helplessness. Target users who have been ignored by support for weeks.">Copy</button>
+  <div class="angle-num">2</div>
+  <div class="angle-headline">&ldquo;Stop Waiting Weeks For A Support Reply&rdquo;</div>
+  <div class="angle-rows">
+    <div class="angle-row">
+      <span class="angle-key">Audience</span>
+      <span class="angle-val">Healthify AI and Cal AI users</span>
+    </div>
+    <div class="angle-row">
+      <span class="angle-key">Exploits</span>
+      <span class="angle-val">Psychological trigger: Helplessness. Target users who have been ignored by support for weeks.</span>
+    </div>
+  </div>
+</div><div class="angle-card">
+  <button class="copy-btn" data-copy="&quot;An AI Calorie Tracker That Actually Loads&quot; — Target: Users of Cal AI and Healthify AI. Exploits: Performance frustration. Target those experiencing 'blank home pages' and 'extreme lag' on high-end devices.">Copy</button>
+  <div class="angle-num">3</div>
+  <div class="angle-headline">&ldquo;An AI Calorie Tracker That Actually Loads&rdquo;</div>
+  <div class="angle-rows">
+    <div class="angle-row">
+      <span class="angle-key">Audience</span>
+      <span class="angle-val">Users of Cal AI and Healthify AI</span>
+    </div>
+    <div class="angle-row">
+      <span class="angle-key">Exploits</span>
+      <span class="angle-val">Performance frustration. Target those experiencing 'blank home pages' and 'extreme lag' on high-end devices.</span>
+    </div>
+  </div>
+</div></div></div></section><section class="panel" id="sentiment"><div class="panel-head"><span class="panel-num">10</span><h2 class="panel-title">Review Sentiment</h2></div><div class="panel-body"><div class="chart-outer">
+  <div class="chart-title">Review sentiment by app</div>
+  <div class="chart-sub">% of each app's reviews that are positive (4-5★) vs negative (1-3★).
+    A competitor with 90%+ negative reviews is in structural decline.</div>
+  <div class="chart-wrap-lg"><canvas id="sentimentChart"></canvas></div>
+</div></div></section><section class="panel" id="friction"><div class="panel-head"><span class="panel-num">11</span><h2 class="panel-title">Competitor Friction</h2></div><div class="panel-body"><div class="chart-outer">
+  <div class="chart-title">Where rivals are losing users — by friction type</div>
+  <div class="chart-sub">
+    Each bar shows the total number of negative review mentions competitors received in that category this week.
+    The tallest bar (red) is where rivals are bleeding users the fastest — and where your messaging should hit hardest.
+  </div>
+  <div class="chart-wrap"><canvas id="frictionChart"></canvas></div>
+  <div class="friction-legend"><div class="friction-legend-item">
+  <div class="friction-legend-dot" style="background:var(--red)"></div>
+  <div>
+    <div class="friction-legend-label">Utility</div>
+    <div class="friction-legend-desc">Top pain: core app actions failing — searching, browsing, checkout, tracking orders.</div>
+    <div class="friction-legend-desc" style="color:var(--text-hi);margin-top:3px;font-style:italic">SnapCalorie: Regression In Ui Simplicity (2) &middot; SnapCalorie: Onboarding Functional Failure (1)</div>
+  </div>
+</div><div class="friction-legend-item">
+  <div class="friction-legend-dot" style="background:var(--amber)"></div>
+  <div>
+    <div class="friction-legend-label">Monetization</div>
+    <div class="friction-legend-desc">Top pain: hidden fees, refund failures, return policy surprises, unfair charges.</div>
+    <div class="friction-legend-desc" style="color:var(--text-hi);margin-top:3px;font-style:italic">SnapCalorie: Monetization Friction (2) &middot; Healthify AI Weight Loss Coach: Aggressive Monetization (4)</div>
+  </div>
+</div><div class="friction-legend-item">
+  <div class="friction-legend-dot" style="background:#8b5cf6"></div>
+  <div>
+    <div class="friction-legend-label">Performance</div>
+    <div class="friction-legend-desc">Top pain: crashes, slow loading, freezes, battery drain, offline failures.</div>
+    <div class="friction-legend-desc" style="color:var(--text-hi);margin-top:3px;font-style:italic">Healthify AI Weight Loss Coach: Navigation Instability (2) &middot; Cal AI - Food Calorie Tracker: Performance Lag (4)</div>
+  </div>
+</div><div class="friction-legend-item">
+  <div class="friction-legend-dot" style="background:var(--teal)"></div>
+  <div>
+    <div class="friction-legend-label">Setup</div>
+    <div class="friction-legend-desc">Top pain: login loops, onboarding errors, account creation failures.</div>
+    <div class="friction-legend-desc" style="color:var(--text-hi);margin-top:3px;font-style:italic">Cal AI - Food Calorie Tracker: Subscription Management Failure (5)</div>
+  </div>
+</div></div>
+</div></div></section><section class="panel" id="strengths"><div class="panel-head"><span class="panel-num">12</span><h2 class="panel-title">What Users Love Per App</h2></div><div class="panel-body"><p style="font-size:12.5px;color:var(--text-muted);margin-bottom:16px;line-height:1.7">
+  Green dots = our retention anchors. Amber dots = competitor strengths — things their users love
+  that we must match or exceed. If a competitor scores high on something we score low on, that is
+  a churn risk hiding in plain sight.
+</p>
+<div class="strengths-grid"><div class="strength-card">
+  <div class="strength-header">
+    <span class="strength-app-name" style="color:var(--teal)">AI Calorie Counter - Appediet</span>
+    <span class="strength-tag strength-ours">Our App</span>
+  </div>
+  
+  <div class="strength-item">
+  <div class="strength-dot"></div>
+  <div class="strength-text">
+    <strong>Food Identification Accuracy</strong>
+    <span class="strength-count">1 mentions</span>
+    <br>Users report high accuracy in AI food identification (approximately 95% success rate).
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot"></div>
+  <div class="strength-text">
+    <strong>General Usability</strong>
+    <span class="strength-count">3 mentions</span>
+    <br>Users describe the app as 'very comfortable', 'amazing', and 'helpful'.
+  </div>
+</div>
+</div><div class="strength-card">
+  <div class="strength-header">
+    <span class="strength-app-name" style="color:var(--text-hi)">SnapCalorie</span>
+    <span class="strength-tag strength-comp">Competitor</span>
+  </div>
+  <div class="strength-caution">&#9888; These are things their users love — if we are weak here, it is a retention risk.</div>
+  <div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Ai Photo Logging</strong>
+    <span class="strength-count strength-comp-count">8 mentions</span>
+    <br>Users are highly impressed with the 'snap a photo' feature for immediate calorie and nutritional estimation, calling it a game-changer.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Multi Modal Input</strong>
+    <span class="strength-count strength-comp-count">7 mentions</span>
+    <br>Strong appreciation for having multiple ways to log: barcode scanning, voice descriptions ('Describe' tool), and nutrition label AI scanning.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Meal Favorites Recipes</strong>
+    <span class="strength-count strength-comp-count">4 mentions</span>
+    <br>The ability to create and save favorite meals/recipes for repeated use is cited as a key driver for tracking simplicity.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Tracking Accuracy</strong>
+    <span class="strength-count strength-comp-count">6 mentions</span>
+    <br>Users frequently describe the macro and calorie estimates as accurate and reliable compared to other apps.
+  </div>
+</div>
+</div><div class="strength-card">
+  <div class="strength-header">
+    <span class="strength-app-name" style="color:var(--text-hi)">Healthify AI Weight Loss Coach</span>
+    <span class="strength-tag strength-comp">Competitor</span>
+  </div>
+  <div class="strength-caution">&#9888; These are things their users love — if we are weak here, it is a retention risk.</div>
+  <div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Macro Tracking Utility</strong>
+    <span class="strength-count strength-comp-count">2 mentions</span>
+    <br>Users value the app for tracking calories and macronutrients effectively.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Regional Food Database</strong>
+    <span class="strength-count strength-comp-count">2 mentions</span>
+    <br>Praised for having a comprehensive database, specifically highlighting its effectiveness with Indian foods.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Weight Loss Results</strong>
+    <span class="strength-count strength-comp-count">1 mentions</span>
+    <br>Users report successful weight loss using the app's paid membership over the long term.
+  </div>
+</div>
+</div><div class="strength-card">
+  <div class="strength-header">
+    <span class="strength-app-name" style="color:var(--text-hi)">Cal AI - Food Calorie Tracker</span>
+    <span class="strength-tag strength-comp">Competitor</span>
+  </div>
+  <div class="strength-caution">&#9888; These are things their users love — if we are weak here, it is a retention risk.</div>
+  <div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Psychological Motivation</strong>
+    <span class="strength-count strength-comp-count">3 mentions</span>
+    <br>Users report the app motivates them and makes them feel confident about their weight loss journey.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Clean Ui Layout</strong>
+    <span class="strength-count strength-comp-count">2 mentions</span>
+    <br>Users praise the layout for being nice and clean, specifically contrasting it favorably against MyFitnessPal.
+  </div>
+</div><div class="strength-item">
+  <div class="strength-dot strength-comp-dot"></div>
+  <div class="strength-text">
+    <strong>Ai Prediction Utility</strong>
+    <span class="strength-count strength-comp-count">1 mentions</span>
+    <br>Some users find the core AI prediction functionality works great despite other performance issues.
+  </div>
+</div>
+</div></div></div></section><section class="panel" id="scores"><div class="panel-head"><span class="panel-num">13</span><h2 class="panel-title">Score Breakdown</h2></div><div class="panel-body"><div class="app-block card" style="overflow:hidden">
+  <div class="app-header">
+    <span class="app-name" style="color:var(--teal)">AI Calorie Counter - Appediet</span>
+    <span class="app-tag tag-ours">Our App</span>
+    <span style="font-size:11px;color:var(--text-muted);margin-left:8px">14 reviews</span>
+    <span class="conf-badge conf-low" style="margin-left:6px">low confidence</span>
+  </div>
+  <table class="score-table"><tr>
+  <td class="score-dim ">Stability (4/10)</td>
+  <td class="score-val">Two reviews report critical failures: one user experiencing a 'white screen' crash and another stating the app 'doesn't work' on their device.</td>
+</tr><tr>
+  <td class="score-dim c-pos">Speed (6/10)</td>
+  <td class="score-val">No specific mentions of latency or speed, but stability issues detract from the perceived performance.</td>
+</tr><tr>
+  <td class="score-dim c-neg">Price (2/10)</td>
+  <td class="score-val">Heavy negative sentiment regarding the 'scam' feeling of the trial, forced payment to log items, and refund denials.</td>
+</tr><tr>
+  <td class="score-dim c-neg">Features (5/10)</td>
+  <td class="score-val">AI identification is praised as 95% accurate, but offset by poor goal customization and rigid measurement units.</td>
+</tr><tr>
+  <td class="score-dim c-pos">Support (3/10)</td>
+  <td class="score-val">Conflicting reports; while one user was helped with a crash, others describe service as 'horrible' and report no response to emails.</td>
+</tr></table>
+</div><div class="app-block card" style="overflow:hidden">
+  <div class="app-header">
+    <span class="app-name" style="color:var(--text-hi)">SnapCalorie</span>
+    <span class="app-tag tag-comp">Competitor</span>
+    <span style="font-size:11px;color:var(--text-muted);margin-left:8px">34 reviews</span>
+    <span class="conf-badge conf-med" style="margin-left:6px">medium confidence</span>
+  </div>
+  <table class="score-table"><tr>
+  <td class="score-dim ">Stability (7/10)</td>
+  <td class="score-val">Generally stable, but 2 reviews mention recent updates negatively impacting usability and 1 reports a broken scanner on day 1.</td>
+</tr><tr>
+  <td class="score-dim ">Speed (9/10)</td>
+  <td class="score-val">Multiple reviews describe the app as 'fast' and 'superschnell', specifically regarding AI and voice input.</td>
+</tr><tr>
+  <td class="score-dim ">Price (5/10)</td>
+  <td class="score-val">Polarized; some praise the ad-free experience, while others describe the $20 charge as 'fraud' or are disappointed by the lack of a free version.</td>
+</tr><tr>
+  <td class="score-dim ">Features (9/10)</td>
+  <td class="score-val">Extremely robust feature set including AI photo, voice, barcodes, recipes, and email summaries.</td>
+</tr><tr>
+  <td class="score-dim ">Support (2/10)</td>
+  <td class="score-val">One critical review explicitly states there is 'no customer help whatsoever' regarding billing and technical issues.</td>
+</tr></table>
+</div><div class="app-block card" style="overflow:hidden">
+  <div class="app-header">
+    <span class="app-name" style="color:var(--text-hi)">Healthify AI Weight Loss Coach</span>
+    <span class="app-tag tag-comp">Competitor</span>
+    <span style="font-size:11px;color:var(--text-muted);margin-left:8px">12 reviews</span>
+    <span class="conf-badge conf-low" style="margin-left:6px">low confidence</span>
+  </div>
+  <table class="score-table"><tr>
+  <td class="score-dim ">Stability (3/10)</td>
+  <td class="score-val">Multiple reports of 'unknown errors' and navigation failures during app usage.</td>
+</tr><tr>
+  <td class="score-dim ">Speed (4/10)</td>
+  <td class="score-val">Users explicitly describe the app as 'very slow' and 'messy'.</td>
+</tr><tr>
+  <td class="score-dim ">Price (3/10)</td>
+  <td class="score-val">Strong sentiment of 'money loss' and 'fraud' due to paywall aggression and subscription errors.</td>
+</tr><tr>
+  <td class="score-dim ">Features (6/10)</td>
+  <td class="score-val">Strong database for Indian foods, but lacks essential two-way health app integration.</td>
+</tr><tr>
+  <td class="score-dim ">Support (1/10)</td>
+  <td class="score-val">Severe complaints regarding executives ignoring emails, lying about tracking details, and denying refunds.</td>
+</tr></table>
+</div><div class="app-block card" style="overflow:hidden">
+  <div class="app-header">
+    <span class="app-name" style="color:var(--text-hi)">Cal AI - Food Calorie Tracker</span>
+    <span class="app-tag tag-comp">Competitor</span>
+    <span style="font-size:11px;color:var(--text-muted);margin-left:8px">50 reviews</span>
+    <span class="conf-badge conf-med" style="margin-left:6px">medium confidence</span>
+  </div>
+  <table class="score-table"><tr>
+  <td class="score-dim ">Stability (2/10)</td>
+  <td class="score-val">Multiple reports of the app 'straight up stopping' and home pages going blank, with one user claiming it fails 90% of the time.</td>
+</tr><tr>
+  <td class="score-dim ">Speed (3/10)</td>
+  <td class="score-val">Recurring complaints about extreme lag during data entry and general slowness even on devices with 8GB RAM.</td>
+</tr><tr>
+  <td class="score-dim ">Price (1/10)</td>
+  <td class="score-val">Over 10 reviews label the app a 'scam' due to immediate charges, lack of trial notifications, and high monthly fees (up to $50 mentioned).</td>
+</tr><tr>
+  <td class="score-dim ">Features (4/10)</td>
+  <td class="score-val">While the AI concept is praised, basic functions like copying meals or viewing previous days are reported to work only 'half of the time'.</td>
+</tr><tr>
+  <td class="score-dim ">Support (1/10)</td>
+  <td class="score-val">Extensive evidence of support failure, with users reporting wait times of 'six weeks' or 'months' and others stating it is 'virtually impossible' to reach a human.</td>
+</tr></table>
+</div></div></section>
+    <div class="report-footer">
+      Generated 2026-05-09 02:30 UTC &nbsp;&middot;&nbsp;
+      Public app store data &nbsp;&middot;&nbsp; Scores are directional signals, not benchmarks
+    </div>
+  </main>
+</div>
+
+<script>
+const sentimentData = {"labels": ["AI Calorie Counter - Appediet", "SnapCalorie", "Healthify AI Weight Loss Coach", "Cal AI - Food Calorie Tracker"], "pos": [35.7, 85.3, 16.7, 22.0], "neg": [64.3, 14.7, 83.3, 78.0], "pos_raw": [5, 29, 2, 11], "neg_raw": [9, 5, 10, 39]};
+const frictionData  = {"labels": ["Setup", "Utility", "Performance", "Monetization"], "values": [5, 15, 6, 18]};
+
+/* ── Mobile nav ── */
+function openNav() {
+  document.getElementById("sidebar").classList.add("open");
+  document.getElementById("navOverlay").classList.add("active");
+  document.body.style.overflow = "hidden";
+}
+function closeNav() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("navOverlay").classList.remove("active");
+  document.body.style.overflow = "";
+}
+
+/* ── Theme ── */
+(function() {
+  const saved = localStorage.getItem("ss-theme");
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const theme = saved || (prefersDark ? "dark" : "light");
+  document.documentElement.setAttribute("data-theme", theme);
+  document.getElementById("theme-btn").textContent = theme === "dark" ? "☀️" : "🌙";
+})();
+
+function toggleTheme() {
+  const cur  = document.documentElement.getAttribute("data-theme");
+  const next = cur === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  localStorage.setItem("ss-theme", next);
+  document.getElementById("theme-btn").textContent = next === "dark" ? "☀️" : "🌙";
+  redrawCharts();
+}
+
+/* ── Active nav ── */
+function navClick(el) {
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  el.classList.add("active");
+  closeNav();
+}
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      document.querySelectorAll(".nav-item").forEach(n => {
+        n.classList.toggle("active", n.getAttribute("href") === "#" + id);
+      });
+    }
+  });
+}, { rootMargin: "-15% 0px -75% 0px" });
+document.querySelectorAll(".panel").forEach(p => observer.observe(p));
+
+/* ── Copy buttons ── */
+document.querySelectorAll(".copy-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    navigator.clipboard.writeText(btn.dataset.copy).then(() => {
+      btn.textContent = "Copied!";
+      btn.classList.add("copied");
+      setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("copied"); }, 1800);
+    });
+  });
+});
+
+/* ── Charts ── */
+let sentChart, fricChart;
+
+function getColors() {
+  const dark = document.documentElement.getAttribute("data-theme") === "dark";
+  return {
+    text:  dark ? "#94a3b8" : "#64748b",
+    grid:  dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
+    teal:  "#0d9488",
+    red:   dark ? "#f87171" : "#dc2626",
+    green: dark ? "#10b981" : "#059669",
+  };
+}
+
+function drawCharts() {
+  const c = getColors();
+
+  const sc = document.getElementById("sentimentChart");
+  if (sc) {
+    sentChart = new Chart(sc.getContext("2d"), {
+      type: "bar",
+      data: {
+        labels: sentimentData.labels,
+        datasets: [
+          { label: "Negative (1-3★)", data: sentimentData.neg.map(v => -v),
+             backgroundColor: c.red, borderRadius: 4 },
+          { label: "Positive (4-5★)", data: sentimentData.pos,
+             backgroundColor: c.teal, borderRadius: 4 },
+        ]
+      },
+      options: {
+        indexAxis: "y", responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: {
+            ticks: { color: c.text, callback: v => Math.abs(v) + "%" },
+            grid: { color: c.grid },
+            min: -105, max: 105,
+          },
+          y: { ticks: { color: c.text }, grid: { display: false } }
+        },
+        plugins: {
+          legend: { position: "bottom", labels: { color: c.text, boxWidth: 10, font: { size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const raw = ctx.datasetIndex === 0
+                  ? sentimentData.neg_raw[ctx.dataIndex]
+                  : sentimentData.pos_raw[ctx.dataIndex];
+                return ` ${Math.abs(ctx.raw).toFixed(1)}% (${raw} reviews)`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  const fc = document.getElementById("frictionChart");
+  if (fc) {
+    const maxV = Math.max(...frictionData.values);
+    fricChart = new Chart(fc.getContext("2d"), {
+      type: "bar",
+      data: {
+        labels: frictionData.labels,
+        datasets: [{
+          data: frictionData.values,
+          backgroundColor: frictionData.values.map(v => v === maxV ? c.red : "rgba(13,148,136,0.35)"),
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        indexAxis: "y", responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.raw} mentions` } }
+        },
+        scales: {
+          x: { ticks: { color: c.text }, grid: { color: c.grid } },
+          y: { ticks: { color: c.text }, grid: { display: false } }
+        }
+      }
+    });
+  }
+}
+
+function redrawCharts() {
+  if (sentChart) sentChart.destroy();
+  if (fricChart)  fricChart.destroy();
+  drawCharts();
+}
+
+drawCharts();
+</script>
+</body>
+</html>
